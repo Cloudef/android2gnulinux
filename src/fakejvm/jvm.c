@@ -1735,34 +1735,34 @@ env_init(JNIEnv *env, struct JNINativeInterface *native)
 static jint
 JavaVM_DestroyJavaVM(JavaVM *vm)
 {
-   return 0;
+   return JNI_OK;
 }
 
 static jint
 JavaVM_AttachCurrentThread(JavaVM *vm, JNIEnv **env, void *args)
 {
    *env = &javavm_get_jvm(vm)->env;
-   return 0;
+   return JNI_OK;
 }
 
 static jint
 JavaVM_DetachCurrentThread(JavaVM *vm)
 {
-   return 0;
+   return JNI_OK;
 }
 
 static jint
 JavaVM_GetEnv(JavaVM *vm, void **env, jint version)
 {
    *env = &javavm_get_jvm(vm)->env;
-   return 0;
+   return JNI_OK;
 }
 
 static jint
 JavaVM_AttachCurrentThreadAsDaemon(JavaVM *vm, JNIEnv **env, void *args)
 {
    *env = &javavm_get_jvm(vm)->env;
-   return 0;
+   return JNI_OK;
 }
 
 static void
