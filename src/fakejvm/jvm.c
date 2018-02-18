@@ -56,6 +56,8 @@ JNIEnv_DefineClass(JNIEnv* p0, const char* p1, jobject p2, const jbyte* p3, jsiz
 static jclass
 JNIEnv_FindClass(JNIEnv* p0, const char* p1)
 {
+   assert(p0 && p1);
+   printf("%s\n", p1);
    struct jclass *class = malloc(sizeof(struct jclass));
    class->name = strdup(p1);
    return class;
@@ -203,6 +205,8 @@ JNIEnv_NewObjectA(JNIEnv* p0, jclass p1, jmethodID p2, jvalue* p3)
 static jclass
 JNIEnv_GetObjectClass(JNIEnv* env, jobject p1)
 {
+   assert(p1);
+   printf("%p\n", p1);
    return 0;
 }
 
@@ -225,6 +229,7 @@ jnienv_make_method(jclass clazz, const char *name, const char *sig)
 static jmethodID
 JNIEnv_GetMethodID(JNIEnv* p0, jclass clazz, const char* name, const char* sig)
 {
+   printf("%s::%s\n", name, sig);
    return jnienv_make_method(clazz, name, sig);
 }
 
@@ -237,6 +242,9 @@ JNIEnv_CallObjectMethod(JNIEnv* p0, jobject p1, jmethodID p2, ...)
 static jobject
 JNIEnv_CallObjectMethodV(JNIEnv *env, jobject p1, jmethodID p2, va_list p3)
 {
+   struct _jmethodID *method = p2;
+   struct jclass *class = method->clazz;
+   printf("%s::%s\n", (class ? class->name : "(null)"), method->name);
    return NULL;
 }
 
@@ -697,6 +705,7 @@ JNIEnv_SetDoubleField(JNIEnv* p0, jobject p1, jfieldID p2, jdouble p3)
 static jmethodID
 JNIEnv_GetStaticMethodID(JNIEnv* p0, jclass clazz, const char* name, const char* sig)
 {
+   printf("%s::%s\n", name, sig);
    return jnienv_make_method(clazz, name, sig);
 }
 
@@ -709,6 +718,9 @@ JNIEnv_CallStaticObjectMethod(JNIEnv* p0, jclass p1, jmethodID p2, ...)
 static jobject
 JNIEnv_CallStaticObjectMethodV(JNIEnv* p0, jclass p1, jmethodID p2, va_list p3)
 {
+   struct _jmethodID *method = p2;
+   struct jclass *class = method->clazz;
+   printf("%s::%s\n", (class ? class->name : "(null)"), method->name);
    return NULL;
 }
 
@@ -1356,22 +1368,24 @@ jnienv_register_jvm_native_method(JNIEnv *env, const char *klass, const char *me
    jvm->methods[i].klass = strdup(klass);
    jvm->methods[i].method = strdup(method);
    jvm->methods[i].function = function;
+   printf("%s::%s\n", klass, method);
 }
 
 static jint
 JNIEnv_RegisterNatives(JNIEnv* p0, jclass p1, const JNINativeMethod* p2, jint p3)
 {
+   assert(p0 && p1);
    const struct jclass *clazz = (struct jclass*)p1;
    const JNINativeMethod *method = p2;
-   for (int i = 0; i < p3; ++i, ++method) {
+   for (int i = 0; i < p3; ++i, ++method)
       jnienv_register_jvm_native_method(p0, clazz->name, method->name, method->fnPtr);
-   }
    return 0;
 }
 
 static jint
 JNIEnv_UnregisterNatives(JNIEnv* p0, jclass p1)
 {
+   assert(p0 && p1);
    const struct jclass *klass = (struct jclass*)p1;
    struct jvm *jvm = jnienv_get_jvm(p0);
    for (size_t i = 0; i < ARRAY_SIZE(jvm->methods) && jvm->methods[i].function; ++i) {
@@ -1474,17 +1488,19 @@ JNIEnv_GetDirectBufferCapacity(JNIEnv* p0, jobject p1)
 const char*
 JNIEnv_GetStringUTFChars(JNIEnv *env, jstring string, jboolean *isCopy)
 {
+   assert(env);
+
    if (!string)
       return strdup("");
 
    struct jstring *str = (struct jstring*)string;
-
    return str->data;
 }
 
 static void
 JNIEnv_ReleaseStringUTFChars(JNIEnv *env, jstring string, const char *utf)
 {
+   assert(env && string);
    free((void*)utf);
 }
 
@@ -1735,12 +1751,14 @@ env_init(JNIEnv *env, struct JNINativeInterface *native)
 static jint
 JavaVM_DestroyJavaVM(JavaVM *vm)
 {
+   assert(vm);
    return JNI_OK;
 }
 
 static jint
 JavaVM_AttachCurrentThread(JavaVM *vm, JNIEnv **env, void *args)
 {
+   assert(vm && env);
    *env = &javavm_get_jvm(vm)->env;
    return JNI_OK;
 }
@@ -1748,12 +1766,14 @@ JavaVM_AttachCurrentThread(JavaVM *vm, JNIEnv **env, void *args)
 static jint
 JavaVM_DetachCurrentThread(JavaVM *vm)
 {
+   assert(vm);
    return JNI_OK;
 }
 
 static jint
 JavaVM_GetEnv(JavaVM *vm, void **env, jint version)
 {
+   assert(vm && env);
    *env = &javavm_get_jvm(vm)->env;
    return JNI_OK;
 }
@@ -1761,6 +1781,7 @@ JavaVM_GetEnv(JavaVM *vm, void **env, jint version)
 static jint
 JavaVM_AttachCurrentThreadAsDaemon(JavaVM *vm, JNIEnv **env, void *args)
 {
+   assert(vm && env);
    *env = &javavm_get_jvm(vm)->env;
    return JNI_OK;
 }
