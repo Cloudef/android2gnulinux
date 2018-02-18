@@ -70,6 +70,12 @@ ALooper_pollAll(int timeoutMillis, int *outFd, int *outEvents, void **outData)
    return 0;
 }
 
+int
+ALooper_pollOnce(int timeoutMillis, int *outFd, int *outEvents, void **outData)
+{
+   return 0;
+}
+
 // ASensor
 
 struct ASensor {
@@ -381,6 +387,12 @@ AInputQueue_attachLooper(struct AInputQueue *queue, struct ALooper *looper, int 
 void
 AInputQueue_detachLooper(struct AInputQueue *queue)
 {
+}
+
+int32_t
+AInputQueue_hasEvents(struct AInputQueue *queue)
+{
+   return 0;
 }
 
 int32_t
