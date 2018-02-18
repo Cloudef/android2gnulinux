@@ -52,8 +52,13 @@ typedef struct {
 } bionic_condattr_t;
 
 typedef int bionic_key_t;
-
 _Static_assert(sizeof(bionic_key_t) == sizeof(pthread_key_t), "bionic_key_t and pthread_key_t size mismatch");
+
+typedef int bionic_pthread_once_t;
+_Static_assert(sizeof(bionic_pthread_once_t) == sizeof(pthread_once_t), "bionic_pthread_once_t and pthread_once_t size mismatch");
+
+typedef long bionic_pthread_t;
+_Static_assert(sizeof(bionic_pthread_t) == sizeof(pthread_t), "bionic_pthread_t and pthread_t size mismatch");
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 #define IS_MAPPED(x) is_mapped(x->glibc, sizeof(x))
@@ -102,6 +107,23 @@ bionic_pthread_mutexattr_init(bionic_mutexattr_t *attr)
    return pthread_mutexattr_init(attr->glibc);
 }
 
+static void
+default_pthread_mutex_init(bionic_mutex_t *mutex)
+{
+   assert(mutex && !IS_MAPPED(mutex));
+   mutex->glibc = mmap(NULL, sizeof(pthread_mutex_t), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+
+   for (size_t i = 0; i < ARRAY_SIZE(bionic_mutex_init_map); ++i) {
+      if (!memcmp(&bionic_mutex_init_map[i].bionic, mutex, sizeof(*mutex)))
+         continue;
+
+      memcpy(mutex->glibc, &bionic_mutex_init_map[i].glibc, sizeof(bionic_mutex_init_map[i].glibc));
+      return;
+   }
+
+   assert(0 && "no such default initializer???");
+}
+
 int
 bionic_pthread_mutex_destroy(bionic_mutex_t *mutex)
 {
@@ -123,29 +145,28 @@ bionic_pthread_mutex_init(bionic_mutex_t *mutex, const bionic_mutexattr_t *attr)
    return pthread_mutex_init(mutex->glibc, (attr ? attr->glibc : NULL));
 }
 
-static void
-default_pthread_mutex_init(bionic_mutex_t *mutex)
-{
-   assert(mutex && !IS_MAPPED(mutex));
-   mutex->glibc = mmap(NULL, sizeof(pthread_mutex_t), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
-
-   for (size_t i = 0; i < ARRAY_SIZE(bionic_mutex_init_map); ++i) {
-      if (!memcmp(&bionic_mutex_init_map[i].bionic, mutex, sizeof(*mutex)))
-         continue;
-
-      memcpy(mutex->glibc, &bionic_mutex_init_map[i].glibc, sizeof(bionic_mutex_init_map[i].glibc));
-      return;
-   }
-
-   assert(0 && "no such default initializer???");
-}
-
 int
 bionic_pthread_mutex_lock(bionic_mutex_t *mutex)
 {
    assert(mutex);
    INIT_IF_NOT_MAPPED(mutex, default_pthread_mutex_init);
    return pthread_mutex_lock(mutex->glibc);
+}
+
+int
+bionic_pthread_mutex_unlock(bionic_mutex_t *mutex)
+{
+   assert(mutex);
+   INIT_IF_NOT_MAPPED(mutex, default_pthread_mutex_init);
+   return pthread_mutex_unlock(mutex->glibc);
+}
+
+static void
+default_pthread_cond_init(bionic_cond_t *cond)
+{
+   assert(cond && !IS_MAPPED(cond));
+   cond->glibc = mmap(NULL, sizeof(pthread_cond_t), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+   memset(cond->glibc, 0, sizeof(pthread_cond_t));
 }
 
 int
@@ -169,10 +190,10 @@ bionic_pthread_cond_init(bionic_cond_t *cond, const bionic_condattr_t *attr)
    return pthread_cond_init(cond->glibc, (attr ? attr->glibc : NULL));
 }
 
-static void
-default_pthread_cond_init(bionic_cond_t *cond)
+int
+bionic_pthread_cond_signal(bionic_cond_t *cond)
 {
-   assert(cond && !IS_MAPPED(cond));
-   cond->glibc = mmap(NULL, sizeof(pthread_cond_t), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
-   memset(cond->glibc, 0, sizeof(pthread_cond_t));
+   assert(cond);
+   INIT_IF_NOT_MAPPED(cond, default_pthread_cond_init);
+   return pthread_cond_signal(cond->glibc);
 }
