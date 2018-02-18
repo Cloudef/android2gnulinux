@@ -163,9 +163,23 @@ enum {
     WRAPPER_ARM_INJECTION,
 };
 
+static char* (*__cxa_demangle)(const char *mangled_name, char *output_buffer, size_t *length, int *status);
+
 static void
 trace(const char *const symbol)
 {
+    if (__cxa_demangle) {
+        // >If output_buffer is not long enough, it is expanded using realloc
+        // Holy fuck gcc what the fuck? Guess we don't use stack then, thanks
+        int status;
+        char *demangled;
+        if ((demangled = __cxa_demangle(symbol, NULL, NULL, &status))) {
+            printf("trace: %s\n", demangled);
+            free(demangled); // so pointless...
+            return;
+        }
+    }
+
     printf("trace: %s\n", symbol);
 }
 
@@ -2118,6 +2132,9 @@ static int apkenv_link_image(soinfo *si, unsigned wr_offset)
             lsi = apkenv_find_library(si->strtab + d[1]);
             if (!lsi && dlopen(si->strtab + d[1], RTLD_NOW | RTLD_GLOBAL)) {
                 DEBUG("Loaded %s with glibc dlopen\n", si->strtab + d[1]);
+
+                if (!__cxa_demangle)
+                    __cxa_demangle = dlsym(RTLD_DEFAULT, "__cxa_demangle");
             }
 #endif
             if(lsi == 0) {
