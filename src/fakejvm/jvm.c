@@ -35,7 +35,7 @@ jvm_string_set_cstr_with_length(struct jvm_string *string, const char *data, con
    assert(string);
 
    char *copy = (char*)data;
-   if (heap && data && len > 0 && !(copy = ccopy(data, len, data[len] != 0)))
+   if (heap && data && len > 0 && !(copy = ccopy(data, len, true)))
       return false;
 
    jvm_string_release(string);
