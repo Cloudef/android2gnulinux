@@ -1,6 +1,12 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <assert.h>
+#include "jvm/jni.h"
+
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
 
 // System
 
@@ -416,6 +422,7 @@ AInputQueue_finishEvent(struct AInputQueue *queue, struct AInputEvent *event, in
 
 struct ANativeWindow
 {
+   GLFWwindow *glfw;
 };
 
 struct ANativeWindow_Buffer
@@ -426,51 +433,82 @@ struct ARect
 {
 };
 
-typedef void JNIEnv;
-typedef uint32_t jobject;
+static void
+glfw_error_cb(int code, const char *error)
+{
+   printf("%d: %s\n", code, error);
+}
 
 struct ANativeWindow*
 ANativeWindow_fromSurface(JNIEnv* env, jobject surface)
 {
-   return NULL;
+   assert(env && surface);
+
+   struct ANativeWindow *win;
+   if (!(win = calloc(1, sizeof(*win))))
+      return NULL;
+
+   glfwInit();
+   printf("glfw: %s\n", glfwGetVersionString());
+   glfwSetErrorCallback(glfw_error_cb);
+   glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+   win->glfw = glfwCreateWindow(1024, 768, "ANativeWindow", NULL, NULL);
+   assert(win->glfw);
+   glfwMakeContextCurrent(win->glfw);
+   return win;
 }
 
 void
 ANativeWindow_acquire(struct ANativeWindow *window)
 {
+   assert(window);
+   // FIXME: refcount
 }
 
 void
 ANativeWindow_release(struct ANativeWindow *window)
 {
+   assert(window);
+   // FIXME: refcount
 }
 
 int32_t
 ANativeWindow_getWidth(struct ANativeWindow *window)
 {
-   return 0;
+   assert(window);
+   int v = 0;
+   glfwGetWindowSize(window->glfw, &v, NULL);
+   return v;
 }
 
 int32_t
 ANativeWindow_getHeight(struct ANativeWindow *window)
 {
-   return 0;
+   assert(window);
+   int v = 0;
+   glfwGetWindowSize(window->glfw, NULL, &v);
+   return v;
 }
 
 int32_t
 ANativeWindow_setBuffersGeometry(struct ANativeWindow *window, int32_t width, int32_t height, int32_t format)
 {
+   assert(window);
    return 0;
 }
 
 int32_t
 ANativeWindow_lock(struct ANativeWindow *window, struct ANativeWindow_Buffer *outBuffer, struct ARect *inOutDirtyBounds)
 {
+   assert(window && outBuffer && inOutDirtyBounds);
    return 0;
 }
 
 int32_t
 ANativeWindow_unlockAndPost(struct ANativeWindow *window)
 {
+   assert(window);
    return 0;
 }

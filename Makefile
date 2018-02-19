@@ -34,6 +34,7 @@ runtime/libc.so: runtime src/libc.c
 runtime/libpthread.so: private CFLAGS += -D_GNU_SOURCE
 runtime/libpthread.so: private LDLIBS += -lpthread
 runtime/libpthread.so: runtime src/libpthread.c
+runtime/libandroid.so: private LDLIBS += `pkg-config --libs glfw3`
 runtime/libandroid.so: runtime src/libandroid.c
 runtime/liblog.so: runtime src/liblog.c
 native: runtime/libc.so runtime/libpthread.so runtime/libandroid.so runtime/liblog.so
