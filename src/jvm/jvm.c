@@ -2378,7 +2378,8 @@ jvm_get_native_method(struct jvm *jvm, const char *klass, const char *method)
 void
 jvm_release(struct jvm *jvm)
 {
-   assert(jvm);
+   if (!jvm)
+      return;
 
    for (size_t i = 0; i < ARRAY_SIZE(jvm->objects); ++i)
       jvm_object_release(&jvm->objects[i]);
