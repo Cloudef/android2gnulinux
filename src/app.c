@@ -28,13 +28,13 @@ main(int argc, const char *argv[])
       apkenv_parse_library_path(dirname(path), ";");
    }
 
-   void *handle;
-   if (!(handle = apkenv_android_dlopen(argv[1], RTLD_NOW | RTLD_LOCAL)))
-      errx(EXIT_FAILURE, "dlopen failed: %s", dlerror());
-
-   printf("trying JNI_OnLoad from: %s\n", argv[1]);
-
    {
+      void *handle;
+      if (!(handle = apkenv_android_dlopen(argv[1], RTLD_NOW | RTLD_LOCAL)))
+         errx(EXIT_FAILURE, "dlopen failed: %s", dlerror());
+
+      printf("trying JNI_OnLoad from: %s\n", argv[1]);
+
       struct jvm jvm;
       jvm_init(&jvm);
 
@@ -42,8 +42,16 @@ main(int argc, const char *argv[])
       assert(JNI_OnLoad);
 
       JNI_OnLoad(&jvm.vm, NULL);
+
+      static const char *unity_player_class = "com/unity3d/player/UnityPlayer";
+      void (*native_init)(void*, void*, int, int) = jvm_get_native_method(&jvm, unity_player_class, "initJni");
+      native_init(&jvm.env, (jclass)1, 1024, 768);
+
+      printf("unloading module: %s\n", argv[1]);
+      apkenv_android_dlclose(handle);
+      jvm_release(&jvm);
    }
 
-   // apkenv_android_dlclose(handle);
+   printf("exiting\n");
    return EXIT_SUCCESS;
 }
