@@ -40,7 +40,7 @@ main(int argc, const char *argv[])
 
       struct jvm jvm;
       jvm_init(&jvm);
-      const jobject context = jvm.native.AllocObject(&jvm.env, jvm.native.FindClass(&jvm.env, "android/content/context"));
+      const jobject context = jvm.native.AllocObject(&jvm.env, jvm.native.FindClass(&jvm.env, "android/content/Context"));
 
       void* (*JNI_OnLoad)(void*, void*) = apkenv_android_dlsym(handle, "JNI_OnLoad");
       assert(JNI_OnLoad);
