@@ -182,7 +182,7 @@ static jclass
 jvm_make_class(struct jvm *jvm, const char *name);
 
 static void
-jvm_assing_default_class(struct jvm *jvm, struct jvm_object *o)
+jvm_assign_default_class(struct jvm *jvm, struct jvm_object *o)
 {
    assert(jvm && o);
 
@@ -219,7 +219,7 @@ jvm_add_object(struct jvm *jvm, const struct jvm_object *o)
    jvm->objects[i] = *o;
 
    if (!jvm->objects[i].this_klass)
-      jvm_assing_default_class(jvm, &jvm->objects[i]);
+      jvm_assign_default_class(jvm, &jvm->objects[i]);
 
    return (jobject)(i + 1);
 }
