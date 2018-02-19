@@ -14,14 +14,11 @@ override CPPFLAGS += -Isrc
 bins = app
 all: $(bins) runtime/libc.so runtime/libandroid.so runtime/liblog.so
 
-%.o: %.c
-	$(COMPILE.c) $^ -o $@
+%.a:
+	$(LINK.c) -c $(filter %.c,$^) -o $@
 
 %.so:
-	$(LINK.c) -shared $(filter %.c,$^) $(LDLIBS) -o $@
-
-%.a:
-	$(AR) rvs $@ $^
+	$(LINK.c) -shared $(filter %.c %.a,$^) $(LDLIBS) -o $@
 
 $(bins): %:
 	$(LINK.c) $(filter %.c %.a,$^) $(LDLIBS) -o $@
@@ -29,29 +26,34 @@ $(bins): %:
 runtime:
 	mkdir -p $@
 
-runtime/libc.so: private CFLAGS += -D_GNU_SOURCE
+wrapper.a: private CPPFLAGS += -D_GNU_SOURCE -DANDROID_X86_LINKER
+wrapper.a: src/wrapper/wrapper.c
+jvm.a: private CPPFLAGS += -D_GNU_SOURCE
+jvm.a: private CFLAGS += -Wno-unused-variable -Wno-pedantic
+jvm.a: wrapper.a src/jvm/jvm.c
+
+runtime/libdl.so: private CPPFLAGS += -D_GNU_SOURCE -DANDROID_X86_LINKER -DLINKER_DEBUG=1
+runtime/libdl.so: private CFLAGS += -Wno-pedantic -Wno-variadic-macros -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast
+runtime/libdl.so: runtime wrapper.a src/linker/dlfcn.c src/linker/linker.c src/linker/linker_environ.c src/linker/rt.c src/linker/strlcpy.c
+runtime/libc.so: private CPPFLAGS += -D_GNU_SOURCE
+runtime/libc.so: private LDLIBS += `pkg-config --libs libbsd`
 runtime/libc.so: runtime src/libc.c
-runtime/libpthread.so: private CFLAGS += -D_GNU_SOURCE
+runtime/libpthread.so: private CPPFLAGS += -D_GNU_SOURCE
 runtime/libpthread.so: private LDLIBS += -lpthread
 runtime/libpthread.so: runtime src/libpthread.c
 runtime/libandroid.so: private LDLIBS += `pkg-config --libs glfw3`
 runtime/libandroid.so: runtime src/libandroid.c
 runtime/liblog.so: runtime src/liblog.c
-native: runtime/libc.so runtime/libpthread.so runtime/libandroid.so runtime/liblog.so
+native: runtime/libdl.so runtime/libc.so runtime/libpthread.so runtime/libandroid.so runtime/liblog.so
 
+runtime/libjvm-java.so: private CPPFLAGS += -D_GNU_SOURCE
 runtime/libjvm-java.so: runtime src/libjvm-java.c
 runtime/libjvm-android.so: runtime src/libjvm-android.c
 java: runtime/libjvm-java.so runtime/libjvm-android.so
 
-linker.a: CFLAGS += -D_GNU_SOURCE -DANDROID_X86_LINKER -DLINKER_DEBUG=1
-linker.a: CFLAGS += -Wno-pedantic -Wno-variadic-macros -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast
-linker.a: src/linker/dlfcn.o src/linker/linker.o src/linker/linker_environ.o src/linker/rt.o src/linker/strlcpy.o
-jvm.a: CFLAGS += -D_GNU_SOURCE
-jvm.a: CFLAGS += -Wno-unused-variable -Wno-pedantic
-jvm.a: src/jvm/jvm.o
-
-app: private LDLIBS += -ldl -Wl,-rpath,runtime
-app: src/app.c linker.a native jvm.a java
+app: private LDLIBS += -ldl -Wl,-rpath,runtime runtime/libdl.so runtime/libpthread.so
+app: private LDLIBS += runtime/libjvm-java.so runtime/libjvm-android.so
+app: wrapper.a src/app.c native jvm.a java
 
 install-bin: $(bins)
 	install -Dm755 $^ -t "$(DESTDIR)$(PREFIX)$(BINDIR)"
@@ -59,7 +61,7 @@ install-bin: $(bins)
 install: install-bin
 
 clean:
-	$(RM) $(bins) *.a src/linker/*.o src/jvm/*.o
+	$(RM) $(bins) *.a
 	$(RM) -r runtime
 
 .PHONY: all clean install

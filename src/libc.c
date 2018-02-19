@@ -22,6 +22,18 @@ gettid(void)
    return syscall(SYS_gettid);
 }
 
+int
+tgkill(int tgid, int tid, int sig)
+{
+   return syscall(SYS_tgkill, tgid, tid, sig);
+}
+
+int
+tkill(int tid, int sig)
+{
+   return syscall(SYS_tkill, tid, sig);
+}
+
 #include "libc-sha1.h"
 
 // Stuff needed for runtime compatibility, but not neccessary for linking

@@ -4,13 +4,8 @@
 #include <dlfcn.h>
 #include <err.h>
 #include <assert.h>
+#include "linker/dlfcn.h"
 #include "jvm/jvm.h"
-
-extern void *apkenv_android_dlopen(const char*, int);
-extern void *apkenv_android_dlclose(void*);
-extern const char *apkenv_android_dlerror(void);
-extern void *apkenv_android_dlsym(void*, const char*);
-extern void apkenv_parse_library_path(const char *path, char *delim);
 
 int
 main(int argc, const char *argv[])
@@ -18,24 +13,19 @@ main(int argc, const char *argv[])
    if (argc < 2)
       errx(EXIT_FAILURE, "usage: so-file");
 
-   printf("loading runtime\n");
-   if (!dlopen("libpthread.so", RTLD_NOW | RTLD_GLOBAL) ||
-       !dlopen("libjvm-java.so", RTLD_NOW | RTLD_GLOBAL) ||
-       !dlopen("libjvm-android.so", RTLD_NOW | RTLD_GLOBAL))
-      errx(EXIT_FAILURE, "%s", dlerror());
-
    printf("loading module: %s\n", argv[1]);
 
    {
+      // FIXME: when bionic linker is rewritten it will just use system search path
       char path[4096];
       snprintf(path, sizeof(path), "%s", argv[1]);
-      apkenv_parse_library_path(dirname(path), ";");
+      dl_parse_library_path(dirname(path), ";");
    }
 
    {
       void *handle;
-      if (!(handle = apkenv_android_dlopen(argv[1], RTLD_NOW | RTLD_LOCAL)))
-         errx(EXIT_FAILURE, "dlopen failed: %s", apkenv_android_dlerror());
+      if (!(handle = bionic_dlopen(argv[1], RTLD_NOW | RTLD_LOCAL)))
+         errx(EXIT_FAILURE, "dlopen failed: %s", bionic_dlerror());
 
       printf("trying JNI_OnLoad from: %s\n", argv[1]);
 
@@ -43,7 +33,7 @@ main(int argc, const char *argv[])
       jvm_init(&jvm);
       const jobject context = jvm.native.AllocObject(&jvm.env, jvm.native.FindClass(&jvm.env, "android/content/Context"));
 
-      void* (*JNI_OnLoad)(void*, void*) = apkenv_android_dlsym(handle, "JNI_OnLoad");
+      void* (*JNI_OnLoad)(void*, void*) = bionic_dlsym(handle, "JNI_OnLoad");
       assert(JNI_OnLoad);
 
       JNI_OnLoad(&jvm.vm, NULL);
@@ -64,10 +54,12 @@ main(int argc, const char *argv[])
       native_file(&jvm.env, context, jvm.native.NewStringUTF(&jvm.env, "./file.apk"));
       native_done(&jvm.env, context);
       native_recreate_gfx_state(&jvm.env, context, context);
+      puts("ASD");
       native_render(&jvm.env, (jobject)1);
+      puts("LOL");
 
       printf("unloading module: %s\n", argv[1]);
-      apkenv_android_dlclose(handle);
+      bionic_dlclose(handle);
       jvm_release(&jvm);
    }
 

@@ -21,6 +21,16 @@ android_content_Context_getSharedPreferences(JNIEnv *env, jobject object, va_lis
    return (sv ? sv : (sv = (*env)->AllocObject(env, (*env)->FindClass(env, "android/content/SharedPreferences"))));
 }
 
+jint
+android_content_SharedPreferences_getInt(JNIEnv *env, jobject object, va_list args)
+{
+   assert(env && object);
+   jstring str = va_arg(args, jstring);
+   printf("%s::%d\n", (*env)->GetStringUTFChars(env, str, NULL), va_arg(args, jint));
+   va_end(args);
+   return 0;
+}
+
 jobject
 android_content_SharedPreferences_edit(JNIEnv *env, jobject object, va_list args)
 {

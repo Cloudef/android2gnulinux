@@ -21,12 +21,7 @@
 #include "linker.h"
 #include "linker_format.h"
 
-/* for apkenv_get_hooked_symbol */
-// #include "../compat/hooks.h"
-
-/* for create_wrapper */
-// #include "../debug/wrappers.h"
-
+#include "wrapper/wrapper.h"
 #include "linker_debug.h"
 
 #ifdef APKENV_DEBUG
@@ -66,7 +61,7 @@ static void set_dlerror(int err)
     dl_err_str = (const char *)&dl_err_buf[0];
 }
 
-void *apkenv_android_dlopen(const char *filename, int flag)
+void *bionic_dlopen(const char *filename, int flag)
 {
     soinfo *ret;
 
@@ -83,18 +78,7 @@ void *apkenv_android_dlopen(const char *filename, int flag)
     return ret;
 }
 
-static void *apkenv_android_dlopen_wrap(const char *filename, int flag)
-{
-#if 0
-    void *ret = get_builtin_lib_handle(filename);
-    if (ret)
-        return ret;
-#endif
-
-    return apkenv_android_dlopen(filename, flag);
-}
-
-const char *apkenv_android_dlerror(void)
+const char *bionic_dlerror(void)
 {
     const char *tmp = dl_err_str;
     dl_err_str = NULL;
@@ -105,7 +89,7 @@ enum {
     WRAPPER_DYNHOOK,
 };
 
-void *apkenv_android_dlsym(void *handle, const char *symbol)
+void *bionic_dlsym(void *handle, const char *symbol)
 {
     soinfo *found;
     Elf32_Sym *sym;
@@ -159,7 +143,7 @@ void *apkenv_android_dlsym(void *handle, const char *symbol)
         if(likely((bind == STB_GLOBAL) && (sym->st_shndx != 0))) {
             unsigned ret = sym->st_value + found->base;
             pthread_mutex_unlock(&apkenv_dl_lock);
-            return create_wrapper((char*)symbol, (void*)ret, WRAPPER_DYNHOOK);
+            return wrapper_create((char*)symbol, (void*)ret);
         }
 
         set_dlerror(DL_ERR_SYMBOL_NOT_GLOBAL);
@@ -173,7 +157,7 @@ err:
     return 0;
 }
 
-int apkenv_android_dladdr(const void *addr, Dl_info *info)
+int bionic_dladdr(const void *addr, Dl_info *info)
 {
     int ret = 0;
 
@@ -204,7 +188,7 @@ int apkenv_android_dladdr(const void *addr, Dl_info *info)
     return ret;
 }
 
-int apkenv_android_dlclose(void *handle)
+int bionic_dlclose(void *handle)
 {
 #if 0
     if (is_builtin_lib_handle(handle))
@@ -224,7 +208,7 @@ int apkenv_android_dlclose(void *handle)
 #define ANDROID_LIBDL_STRTAB \
                       "dlopen\0dlclose\0dlsym\0dlerror\0dladdr\0dl_unwind_find_exidx\0"
 
-_Unwind_Ptr apkenv_android_dl_unwind_find_exidx(_Unwind_Ptr pc, int *pcount);
+_Unwind_Ptr bionic_dl_unwind_find_exidx(_Unwind_Ptr pc, int *pcount);
 
 #elif defined(ANDROID_X86_LINKER)
 //                     0000000 00011111 111112 22222222 2333333 3333444444444455
@@ -232,8 +216,7 @@ _Unwind_Ptr apkenv_android_dl_unwind_find_exidx(_Unwind_Ptr pc, int *pcount);
 #define ANDROID_LIBDL_STRTAB \
                       "dlopen\0dlclose\0dlsym\0dlerror\0dladdr\0dl_iterate_phdr\0"
 int
-apkenv_android_dl_iterate_phdr(int (*cb)(struct dl_phdr_info *info, size_t size, void *data),
-                void *data);
+bionic_dl_iterate_phdr(int (*cb)(struct dl_phdr_info *info, size_t size, void *data), void *data);
 
 #else
 #error Unsupported architecture. Only ARM and x86 are presently supported.
@@ -289,41 +272,41 @@ construct(void)
       .st_name = sizeof(ANDROID_LIBDL_STRTAB) - 1,
     }, {
       .st_name = 0,   // starting index of the name in apkenv_libdl_info.strtab
-      .st_value = (Elf32_Addr)(uintptr_t)apkenv_android_dlopen_wrap,
+      .st_value = (Elf32_Addr)(uintptr_t)bionic_dlopen,
       .st_info = STB_GLOBAL << 4,
       .st_shndx = 1,
     }, {
       .st_name = 7,
-      .st_value = (Elf32_Addr)(uintptr_t)apkenv_android_dlclose,
+      .st_value = (Elf32_Addr)(uintptr_t)bionic_dlclose,
       .st_info = STB_GLOBAL << 4,
       .st_shndx = 1,
     }, {
       .st_name = 15,
-      .st_value = (Elf32_Addr)(uintptr_t)apkenv_android_dlsym,
+      .st_value = (Elf32_Addr)(uintptr_t)bionic_dlsym,
       .st_info = STB_GLOBAL << 4,
       .st_shndx = 1,
     }, {
       .st_name = 21,
-      .st_value = (Elf32_Addr)(uintptr_t)apkenv_android_dlerror,
+      .st_value = (Elf32_Addr)(uintptr_t)bionic_dlerror,
       .st_info = STB_GLOBAL << 4,
       .st_shndx = 1,
     }, {
       .st_name = 29,
-      .st_value = (Elf32_Addr)(uintptr_t)apkenv_android_dladdr,
+      .st_value = (Elf32_Addr)(uintptr_t)bionic_dladdr,
       .st_info = STB_GLOBAL << 4,
       .st_shndx = 1,
     },
 #ifdef ANDROID_ARM_LINKER
     {
       .st_name = 36,
-      .st_value = (Elf32_Addr)(uintptr_t)apkenv_android_dl_unwind_find_exidx,
+      .st_value = (Elf32_Addr)(uintptr_t)bionic_dl_unwind_find_exidx,
       .st_info = STB_GLOBAL << 4,
       .st_shndx = 1,
     },
 #elif defined(ANDROID_X86_LINKER)
     {
       .st_name = 36,
-      .st_value = (Elf32_Addr)(uintptr_t)apkenv_android_dl_iterate_phdr,
+      .st_value = (Elf32_Addr)(uintptr_t)bionic_dl_iterate_phdr,
       .st_info = STB_GLOBAL << 4,
       .st_shndx = 1,
     },

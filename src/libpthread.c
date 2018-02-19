@@ -73,6 +73,22 @@ is_mapped(void *mem, const size_t sz)
    return !mincore(mem, sz, vec);
 }
 
+void
+bionic___pthread_cleanup_push(void *c, void *routine, void *arg)
+{
+}
+
+void
+bionic___pthread_cleanup_pop(void *c, int execute)
+{
+}
+
+int
+bionic_pthread_cond_timedwait_relative_np(bionic_cond_t *cond, bionic_mutex_t *mutex, const struct timespec *reltime)
+{
+   return 0;
+}
+
 int
 bionic_pthread_cond_timedwait_monotonic_np(bionic_cond_t *cond, bionic_mutex_t *mutex, const struct timespec *abstime)
 {

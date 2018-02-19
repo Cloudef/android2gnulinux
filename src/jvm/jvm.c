@@ -6,11 +6,10 @@
 #include <assert.h>
 #include "dlfcn.h"
 #include "jvm.h"
+#include "wrapper/wrapper.h"
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 #define container_of(ptr, type, member) ((type *)((char *)(1 ? (ptr) : &((type *)0)->member) - offsetof(type, member)))
-
-extern void* create_wrapper(const char *const symbol, void *function);
 
 static inline char*
 ccopy(const char *str, const size_t len, const bool null_terminate)
@@ -107,7 +106,7 @@ jvm_object_release(struct jvm_object *o)
 
    assert(o->type < JVM_OBJECT_LAST);
 
-   if (destructor)
+   if (destructor[o->type])
       destructor[o->type](o);
 
    *o = (struct jvm_object){0};
@@ -502,7 +501,7 @@ JNIEnv_CallObjectMethodV(JNIEnv *p0, jobject p1, jmethodID p2, va_list p3)
    assert(p0 && p1 && p2);
    char symbol[255];
    jvm_form_symbol(jnienv_get_jvm(p0), p2, symbol, sizeof(symbol));
-   jobject (*fun)(JNIEnv*, jobject, va_list) = create_wrapper(symbol, dlsym(RTLD_DEFAULT, symbol));
+   jobject (*fun)(JNIEnv*, jobject, va_list) = wrapper_create(symbol, dlsym(RTLD_DEFAULT, symbol));
    return fun(p0, p1, p3);
 }
 
@@ -530,10 +529,10 @@ static jboolean
 JNIEnv_CallBooleanMethodV(JNIEnv* p0, jobject p1, jmethodID p2, va_list p3)
 {
    assert(p0 && p1 && p2);
-   struct jvm *jvm = jnienv_get_jvm(p0);
-   struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
-   return 0;
+   char symbol[255];
+   jvm_form_symbol(jnienv_get_jvm(p0), p2, symbol, sizeof(symbol));
+   jboolean (*fun)(JNIEnv*, jobject, va_list) = wrapper_create(symbol, dlsym(RTLD_DEFAULT, symbol));
+   return fun(p0, p1, p3);
 }
 
 static jboolean
@@ -650,10 +649,10 @@ static jint
 JNIEnv_CallIntMethodV(JNIEnv* p0, jobject p1, jmethodID p2, va_list p3)
 {
    assert(p0 && p1 && p2);
-   struct jvm *jvm = jnienv_get_jvm(p0);
-   struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
-   return 0;
+   char symbol[255];
+   jvm_form_symbol(jnienv_get_jvm(p0), p2, symbol, sizeof(symbol));
+   jint (*fun)(JNIEnv*, jobject, va_list) = wrapper_create(symbol, dlsym(RTLD_DEFAULT, symbol));
+   return fun(p0, p1, p3);
 }
 
 static jint
@@ -771,7 +770,7 @@ JNIEnv_CallVoidMethodV(JNIEnv* p0, jobject p1, jmethodID p2, va_list p3)
    assert(p0 && p1 && p2);
    char symbol[255];
    jvm_form_symbol(jnienv_get_jvm(p0), p2, symbol, sizeof(symbol));
-   void (*fun)(JNIEnv*, jobject, va_list) = create_wrapper(symbol, dlsym(RTLD_DEFAULT, symbol));
+   void (*fun)(JNIEnv*, jobject, va_list) = wrapper_create(symbol, dlsym(RTLD_DEFAULT, symbol));
    fun(p0, p1, p3);
 }
 
@@ -1477,9 +1476,10 @@ static void
 JNIEnv_CallStaticVoidMethodV(JNIEnv* p0, jclass p1, jmethodID p2, va_list p3)
 {
    assert(p0 && p1 && p2);
-   struct jvm *jvm = jnienv_get_jvm(p0);
-   struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   char symbol[255];
+   jvm_form_symbol(jnienv_get_jvm(p0), p2, symbol, sizeof(symbol));
+   void (*fun)(JNIEnv*, jobject, va_list) = wrapper_create(symbol, dlsym(RTLD_DEFAULT, symbol));
+   fun(p0, p1, p3);
 }
 
 static void
@@ -2075,7 +2075,7 @@ JNIEnv_ReleaseStringUTFChars(JNIEnv *env, jstring string, const char *utf)
    assert(env && string && utf);
 }
 
-#define WRAP(x) create_wrapper(#x, x)
+#define WRAP(x) wrapper_create(#x, x)
 
 static void
 env_init(JNIEnv *env, struct JNINativeInterface *native)
@@ -2368,7 +2368,7 @@ jvm_get_native_method(struct jvm *jvm, const char *klass, const char *method)
    for (size_t i = 0; i < ARRAY_SIZE(jvm->methods) && jvm->methods[i].function; ++i) {
       if (!strcmp(jvm_get_object(jvm, jvm->methods[i].method.klass)->klass.name.data, klass) &&
           !strcmp(jvm->methods[i].method.name.data, method))
-         return create_wrapper(method, jvm->methods[i].function);
+         return wrapper_create(method, jvm->methods[i].function);
    }
    return NULL;
 }

@@ -54,10 +54,7 @@
 
 #include "strlcpy.h"
 
-/* for apkenv_get_hooked_symbol */
-// #include "../compat/hooks.h"
-/* for create_wrapper */
-// #include "../debug/wrappers.h"
+#include "wrapper/wrapper.h"
 
 #include "linker.h"
 #include "linker_debug.h"
@@ -162,50 +159,6 @@ enum {
     WRAPPER_UNHOOKED,
     WRAPPER_ARM_INJECTION,
 };
-
-static char* (*__cxa_demangle)(const char *mangled_name, char *output_buffer, size_t *length, int *status);
-
-static void
-trace(const char *const symbol)
-{
-    if (__cxa_demangle) {
-        // >If output_buffer is not long enough, it is expanded using realloc
-        // Holy fuck gcc what the fuck? Guess we don't use stack then, thanks
-        int status;
-        char *demangled;
-        if ((demangled = __cxa_demangle(symbol, NULL, NULL, &status))) {
-            printf("trace: %s\n", demangled);
-            free(demangled); // so pointless...
-            return;
-        }
-    }
-
-    printf("trace: %s\n", symbol);
-}
-
-__asm__(
-    "wrapper_start: nop\n"
-    "wrapper_symbol: pushl $0xFAFBFCFD\n"
-    "wrapper_trace: movl $0xFAFBFCFD, %eax\ncall *%eax\npop %eax\n"
-    "wrapper_call: movl $0xFAFBFCFD, %eax\njmp *%eax\n"
-    "wrapper_end: nop\n"
-);
-
-extern char wrapper_start, wrapper_symbol, wrapper_trace, wrapper_call, wrapper_end;
-
-void*
-create_wrapper(const char *const symbol, void *function, int wrapper_type)
-{
-    const size_t sz = &wrapper_end - &wrapper_start;
-    unsigned char *fun = mmap(NULL, sz, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-    assert(fun != MAP_FAILED);
-    memcpy(fun, &wrapper_start, sz);
-    memcpy(fun + (&wrapper_symbol - &wrapper_start) + 1, &symbol, sizeof(symbol));
-    memcpy(fun + (&wrapper_trace - &wrapper_start) + 1, (uintptr_t[]){ (uintptr_t)trace }, sizeof(uintptr_t));
-    memcpy(fun + (&wrapper_call - &wrapper_start) + 1, &function, sizeof(function));
-    mprotect(fun, sz, PROT_READ | PROT_EXEC);
-    return fun;
-}
 
 /*
  * This function is an empty stub where GDB locates a breakpoint to get notified
@@ -388,19 +341,6 @@ static void apkenv_free_info(soinfo *si)
     apkenv_freelist = si;
 }
 
-static const char *apkenv_addr_to_name(unsigned addr)
-{
-    soinfo *si;
-
-    for(si = apkenv_solist; si != 0; si = si->next){
-        if((addr >= si->base) && (addr < (si->base + si->size))) {
-            return si->name;
-        }
-    }
-
-    return "";
-}
-
 /* For a given PC, find the .so that it belongs to.
  * Returns the base address of the .ARM.exidx section
  * for that .so, and the number of 8-byte entries
@@ -411,7 +351,7 @@ static const char *apkenv_addr_to_name(unsigned addr)
  * This function is exposed via dlfcn.c and libdl.so.
  */
 #ifdef ANDROID_ARM_LINKER
-_Unwind_Ptr apkenv_android_dl_unwind_find_exidx(_Unwind_Ptr pc, int *pcount)
+_Unwind_Ptr bionic_dl_unwind_find_exidx(_Unwind_Ptr pc, int *pcount)
 {
     soinfo *si;
     unsigned addr = (unsigned)pc;
@@ -428,7 +368,7 @@ _Unwind_Ptr apkenv_android_dl_unwind_find_exidx(_Unwind_Ptr pc, int *pcount)
 /* Here, we only have to provide a callback to iterate across all the
  * loaded libraries. gcc_eh does the rest. */
 int
-apkenv_android_dl_iterate_phdr(int (*cb)(struct dl_phdr_info *info, size_t size, void *data),
+bionic_dl_iterate_phdr(int (*cb)(struct dl_phdr_info *info, size_t size, void *data),
                 void *data)
 {
     soinfo *si;
@@ -1427,7 +1367,7 @@ static int apkenv_reloc_library(soinfo *si, Elf32_Rel *rel, unsigned count)
 
             if (!strcmp(sym_name, "dl_iterate_phdr")) {
                 // FIXME: hack, move to libc.so
-                sym_addr = apkenv_android_dl_iterate_phdr;
+                sym_addr = bionic_dl_iterate_phdr;
             } else if ((sym_addr = dlsym(RTLD_DEFAULT, wrap_sym_name))) {
                LINKER_DEBUG_PRINTF("%s hooked symbol %s to %x\n", si->name, wrap_sym_name, sym_addr);
             } else if ((sym_addr = dlsym(RTLD_DEFAULT, sym_name))) {
@@ -1444,7 +1384,7 @@ static int apkenv_reloc_library(soinfo *si, Elf32_Rel *rel, unsigned count)
             }
             if(sym_addr != 0)
             {
-                sym_addr = (unsigned)create_wrapper(sym_name, (void*)sym_addr, WRAPPER_UNHOOKED);
+                sym_addr = (unsigned)wrapper_create(sym_name, (void*)sym_addr);
             } else
             if(s == NULL) {
                 /* We only allow an undefined symbol if this is a weak
@@ -1515,7 +1455,7 @@ static int apkenv_reloc_library(soinfo *si, Elf32_Rel *rel, unsigned count)
                 sym_addr = (unsigned)(s->st_value + base);
                 LINKER_DEBUG_PRINTF("%s symbol (from %s) %s to %x\n", si->name, apkenv_last_library_used, sym_name, sym_addr);
                 if(ELF32_ST_TYPE(s->st_info) == STT_FUNC) {
-                    sym_addr = (unsigned)create_wrapper(sym_name, (void*)sym_addr, WRAPPER_UNHOOKED);
+                    sym_addr = (unsigned)wrapper_create(sym_name, (void*)sym_addr);
                 }
 
     }
@@ -1834,7 +1774,7 @@ static void apkenv_wrap_function(void *sym_addr, char *sym_name, int is_thumb, s
         {
             DEBUG("HOOKING INTERNAL (ARM) FUNCTION %s@%x (in %s) TO: %x\n",sym_name,sym_addr,si->name,hook);
             ((int32_t*)sym_addr)[0] = 0xe51ff004; // ldr pc, [pc, -#4] (load the hooks address into pc)
-            ((int32_t*)sym_addr)[1] = (uint32_t)create_wrapper(sym_name, hook, WRAPPER_LATEHOOK);
+            ((int32_t*)sym_addr)[1] = (uint32_t)wrapper_create(sym_name, hook);
 
             __clear_cache((int32_t*)sym_addr, (int32_t*)sym_addr + 2);
         }
@@ -1850,7 +1790,7 @@ static void apkenv_wrap_function(void *sym_addr, char *sym_name, int is_thumb, s
             ((int16_t*)sym_addr)[4] = 0xBC01; /* pop {r0} */
             ((int16_t*)sym_addr)[5] = 0x4760; /* bx ip */
 
-            void *wrp = create_wrapper(sym_name, hook, WRAPPER_LATEHOOK);
+            void *wrp = wrapper_create(sym_name, hook);
 
             // store the hooks address
             ((int16_t*)sym_addr)[6] = (uint32_t)wrp & 0x0000FFFF;
@@ -1867,7 +1807,7 @@ static void apkenv_wrap_function(void *sym_addr, char *sym_name, int is_thumb, s
     {
         DEBUG("CREATING ARM WRAPPER FOR: %s@%x (in %s)\n", sym_name, (unsigned)sym_addr, si->name);
 
-        create_wrapper(sym_name, sym_addr, WRAPPER_ARM_INJECTION);
+        wrapper_create(sym_name, sym_addr);
     }
     // TODO: this will fail if the first 2-5 instructions do something pc related
     // (this DOES happen very often)
@@ -1875,7 +1815,7 @@ static void apkenv_wrap_function(void *sym_addr, char *sym_name, int is_thumb, s
     {
         DEBUG("CREATING THUMB WRAPPER FOR: %s@%x (in %s)\n",sym_name, (unsigned)sym_addr,si->name);
 
-        create_wrapper(sym_name, sym_addr, WRAPPER_THUMB_INJECTION);
+        wrapper_create(sym_name, sym_addr);
     }
 }
 
@@ -2133,9 +2073,6 @@ static int apkenv_link_image(soinfo *si, unsigned wr_offset)
             lsi = apkenv_find_library(si->strtab + d[1]);
             if (!lsi && dlopen(si->strtab + d[1], RTLD_NOW | RTLD_GLOBAL)) {
                 DEBUG("Loaded %s with glibc dlopen\n", si->strtab + d[1]);
-
-                if (!__cxa_demangle)
-                    __cxa_demangle = dlsym(RTLD_DEFAULT, "__cxa_demangle");
             }
 #endif
             if(lsi == 0) {
@@ -2234,7 +2171,7 @@ fail:
     return -1;
 }
 
-void apkenv_parse_library_path(const char *path, char *delim)
+void dl_parse_library_path(const char *path, char *delim)
 {
     size_t len;
     char *apkenv_ldpaths_bufp = apkenv_ldpaths_buf;
@@ -2428,7 +2365,7 @@ sanitize:
 
         /* Use LD_LIBRARY_PATH if we aren't setuid/setgid */
     if (ldpath_env)
-        apkenv_parse_library_path(ldpath_env, ":");
+        dl_parse_library_path(ldpath_env, ":");
 
     if (ldpreload_env) {
         apkenv_parse_apkenv_preloads(ldpreload_env, " :");
