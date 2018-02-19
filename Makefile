@@ -39,6 +39,9 @@ runtime/libandroid.so: runtime src/libandroid.c
 runtime/liblog.so: runtime src/liblog.c
 native: runtime/libc.so runtime/libpthread.so runtime/libandroid.so runtime/liblog.so
 
+runtime/libjvm-android.so: runtime src/libjvm-android.c
+java: runtime/libjvm-android.so
+
 linker.a: CFLAGS += -D_GNU_SOURCE -DANDROID_X86_LINKER -DLINKER_DEBUG=1
 linker.a: CFLAGS += -Wno-pedantic -Wno-variadic-macros -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast
 linker.a: src/linker/dlfcn.o src/linker/linker.o src/linker/linker_environ.o src/linker/rt.o src/linker/strlcpy.o
@@ -47,7 +50,7 @@ jvm.a: CFLAGS += -Wno-unused-variable -Wno-pedantic
 jvm.a: src/jvm/jvm.o
 
 app: private LDLIBS += -ldl -Wl,-rpath,runtime
-app: src/app.c linker.a native jvm.a
+app: src/app.c linker.a native jvm.a java
 
 install-bin: $(bins)
 	install -Dm755 $^ -t "$(DESTDIR)$(PREFIX)$(BINDIR)"
