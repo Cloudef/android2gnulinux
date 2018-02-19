@@ -157,7 +157,7 @@ jvm_find_object(struct jvm *jvm, const struct jvm_object *o)
 
       assert(o->type < JVM_OBJECT_LAST);
       if (comparator[o->type](o, &jvm->objects[i]))
-         return (void*)(i + 1);
+         return (jobject)(i + 1);
    }
 
    return 0;
@@ -203,7 +203,7 @@ jvm_add_object(struct jvm *jvm, const struct jvm_object *o)
    if (!jvm->objects[i].this_klass)
       jvm_assing_default_class(jvm, &jvm->objects[i]);
 
-   return (void*)(i + 1);
+   return (jobject)(i + 1);
 }
 
 static jobject
