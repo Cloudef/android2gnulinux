@@ -20,6 +20,7 @@ main(int argc, const char *argv[])
 
    printf("loading runtime\n");
    if (!dlopen("libpthread.so", RTLD_NOW | RTLD_GLOBAL) ||
+       !dlopen("libjvm-java.so", RTLD_NOW | RTLD_GLOBAL) ||
        !dlopen("libjvm-android.so", RTLD_NOW | RTLD_GLOBAL))
       errx(EXIT_FAILURE, "%s", dlerror());
 

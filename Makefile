@@ -39,8 +39,9 @@ runtime/libandroid.so: runtime src/libandroid.c
 runtime/liblog.so: runtime src/liblog.c
 native: runtime/libc.so runtime/libpthread.so runtime/libandroid.so runtime/liblog.so
 
+runtime/libjvm-java.so: runtime src/libjvm-java.c
 runtime/libjvm-android.so: runtime src/libjvm-android.c
-java: runtime/libjvm-android.so
+java: runtime/libjvm-java.so runtime/libjvm-android.so
 
 linker.a: CFLAGS += -D_GNU_SOURCE -DANDROID_X86_LINKER -DLINKER_DEBUG=1
 linker.a: CFLAGS += -Wno-pedantic -Wno-variadic-macros -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast

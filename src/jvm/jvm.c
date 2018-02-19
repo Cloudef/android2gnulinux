@@ -175,7 +175,7 @@ jvm_find_object(struct jvm *jvm, const struct jvm_object *o)
          return (jobject)(i + 1);
    }
 
-   return 0;
+   return NULL;
 }
 
 static jclass
@@ -493,6 +493,7 @@ jvm_form_symbol(struct jvm *jvm, jmethodID method_id, char *symbol, const size_t
    printf("%s::%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data, method->signature.data);
    snprintf(symbol, symbol_sz, "%s_%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    cstr_replace(symbol, '/', '_');
+   cstr_replace(symbol, '$', '_');
 }
 
 static jobject
