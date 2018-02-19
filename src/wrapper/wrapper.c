@@ -33,9 +33,11 @@ trace(const char *const symbol)
         // Holy fuck gcc what the fuck? Guess we don't use stack then, thanks
         int status;
         char *demangled;
-        if ((demangled = __cxa_demangle(symbol, NULL, NULL, &status))) {
+        static __thread char *data;
+        static __thread size_t size;
+        if ((demangled = __cxa_demangle(symbol, data, &size, &status))) {
+            data = (data != demangled ? demangled : data);
             printf("trace: %s\n", demangled);
-            free(demangled); // so pointless...
             return;
         }
     }
