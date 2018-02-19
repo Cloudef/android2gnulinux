@@ -769,9 +769,10 @@ static void
 JNIEnv_CallVoidMethodV(JNIEnv* p0, jobject p1, jmethodID p2, va_list p3)
 {
    assert(p0 && p1 && p2);
-   struct jvm *jvm = jnienv_get_jvm(p0);
-   struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   char symbol[255];
+   jvm_form_symbol(jnienv_get_jvm(p0), p2, symbol, sizeof(symbol));
+   void (*fun)(JNIEnv*, jobject, va_list) = create_wrapper(symbol, dlsym(RTLD_DEFAULT, symbol));
+   fun(p0, p1, p3);
 }
 
 static void

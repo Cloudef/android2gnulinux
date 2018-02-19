@@ -22,10 +22,11 @@ jobject
 java_lang_ClassLoader_findLibrary(JNIEnv *env, jobject object, va_list args)
 {
    assert(env && object);
-   jstring str = va_arg(args, jstring);
-   printf("%s\n", (*env)->GetStringUTFChars(env, str, NULL));
+   char lib[255];
+   snprintf(lib, sizeof(lib), "lib%s.so", (*env)->GetStringUTFChars(env, va_arg(args, jstring), NULL));
    va_end(args);
-   return NULL;
+   printf("%s\n", lib);
+   return (*env)->NewStringUTF(env, lib);
 }
 
 jobject

@@ -46,3 +46,9 @@ android_content_SharedPreferences_Editor_putInt(JNIEnv *env, jobject object, va_
    va_end(args);
    return object;
 }
+
+void
+android_content_SharedPreferences_Editor_apply(JNIEnv *env, jobject object, va_list args)
+{
+   assert(env && object);
+}
