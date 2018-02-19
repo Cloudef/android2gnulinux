@@ -4,10 +4,13 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <assert.h>
+#include "dlfcn.h"
 #include "jvm.h"
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 #define container_of(ptr, type, member) ((type *)((char *)(1 ? (ptr) : &((type *)0)->member) - offsetof(type, member)))
+
+extern void* create_wrapper(const char *const symbol, void *function);
 
 static inline char*
 ccopy(const char *str, const size_t len, const bool null_terminate)
@@ -95,6 +98,7 @@ jvm_object_release(struct jvm_object *o)
 
    void (*destructor[])(struct jvm_object *o) = {
       NULL,
+      NULL,
       release_array,
       release_method,
       release_class,
@@ -102,8 +106,18 @@ jvm_object_release(struct jvm_object *o)
    };
 
    assert(o->type < JVM_OBJECT_LAST);
-   destructor[o->type](o);
+
+   if (destructor)
+      destructor[o->type](o);
+
    *o = (struct jvm_object){0};
+}
+
+static bool
+compare_opaque(const struct jvm_object *a, const struct jvm_object *b)
+{
+   assert(a && b);
+   return (a->this_klass == b->this_klass);
 }
 
 static bool
@@ -145,6 +159,7 @@ jvm_find_object(struct jvm *jvm, const struct jvm_object *o)
 
    bool (*comparator[])(const struct jvm_object *a, const struct jvm_object *b) = {
       NULL,
+      compare_opaque,
       compare_array,
       compare_method,
       compare_class,
@@ -173,16 +188,17 @@ jvm_assing_default_class(struct jvm *jvm, struct jvm_object *o)
 
    switch (o->type) {
       case JVM_OBJECT_METHOD:
-         o->this_klass = jvm_make_class(jvm, "java.lang.reflect.Method");
+         o->this_klass = jvm_make_class(jvm, "java/lang/reflect/Method");
          break;
 
       case JVM_OBJECT_STRING:
-         o->this_klass = jvm_make_class(jvm, "java.lang.String");
+         o->this_klass = jvm_make_class(jvm, "java/lang/String");
          break;
 
       case JVM_OBJECT_NONE:
       case JVM_OBJECT_ARRAY:
       case JVM_OBJECT_CLASS:
+      case JVM_OBJECT_LAST:
          // arrays have unique classes which is handled on `jvm_new_array`
          // `jvm_make_class` points class's `this_class` to first object, which is class definition for a class
          assert(0 && "epic failure");
@@ -387,31 +403,40 @@ JNIEnv_EnsureLocalCapacity(JNIEnv* p0, jint p1)
 static jobject
 JNIEnv_AllocObject(JNIEnv* p0, jclass p1)
 {
-   return NULL;
+   assert(p0 && p1);
+   struct jvm_object o = { .this_klass = p1, .type = JVM_OBJECT_OPAQUE };
+   return jvm_add_object_if_not_there(jnienv_get_jvm(p0), &o);
 }
 
 static jobject
 JNIEnv_NewObject(JNIEnv* p0, jclass p1, jmethodID p2, ...)
 {
-   return NULL;
+   assert(p0 && p1);
+   return JNIEnv_AllocObject(p0, p1);
+   // FIXME: call constructor
 }
 
 static jobject
-JNIEnv_NewObjectV(JNIEnv *env, jclass p1, jmethodID p2, va_list p3)
+JNIEnv_NewObjectV(JNIEnv *p0, jclass p1, jmethodID p2, va_list p3)
 {
-   return 0;
+   assert(p0 && p1);
+   return JNIEnv_AllocObject(p0, p1);
+   // FIXME: call constructor
 }
 
 static jobject
 JNIEnv_NewObjectA(JNIEnv* p0, jclass p1, jmethodID p2, jvalue* p3)
 {
-   return NULL;
+   assert(p0 && p1);
+   return JNIEnv_AllocObject(p0, p1);
+   // FIXME: call constructor
 }
 
 static jclass
 JNIEnv_GetObjectClass(JNIEnv* env, jobject p1)
 {
    assert(env && p1);
+   printf("%u\n", (uint32_t)(uintptr_t)p1);
    return jvm_get_object(jnienv_get_jvm(env), p1)->this_klass;
 }
 
@@ -424,6 +449,8 @@ JNIEnv_IsInstanceOf(JNIEnv* p0, jobject p1, jclass p2)
 static jmethodID
 jvm_make_method(struct jvm *jvm, jclass klass, const char *name, const char *sig)
 {
+   assert(jvm && klass && name && sig);
+   printf("%s::%s::%s\n", jvm_get_object(jvm, klass)->klass.name.data, name, sig);
    struct jvm_object o = { .method.klass = klass, .type = JVM_OBJECT_METHOD };
    jvm_string_set_cstr(&o.method.name, name, true);
    jvm_string_set_cstr(&o.method.signature, sig, true);
@@ -433,7 +460,6 @@ jvm_make_method(struct jvm *jvm, jclass klass, const char *name, const char *sig
 static jmethodID
 JNIEnv_GetMethodID(JNIEnv* p0, jclass klass, const char* name, const char* sig)
 {
-   printf("%s::%s\n", name, sig);
    return jvm_make_method(jnienv_get_jvm(p0), klass, name, sig);
 }
 
@@ -443,14 +469,38 @@ JNIEnv_CallObjectMethod(JNIEnv* p0, jobject p1, jmethodID p2, ...)
    return NULL;
 }
 
+static char*
+cstr_replace(char *cstr, const char replace, const char with)
+{
+   assert(cstr && replace != with);
+
+   if (replace == with)
+      return cstr;
+
+   char *s = cstr;
+   while ((s = strchr(s, replace)))
+      *s = with;
+   return cstr;
+}
+
+static void
+jvm_form_symbol(struct jvm *jvm, jmethodID method_id, char *symbol, const size_t symbol_sz)
+{
+   assert(jvm && method_id);
+   struct jvm_method *method = &jvm_get_object(jvm, method_id)->method;
+   printf("%s::%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data, method->signature.data);
+   snprintf(symbol, symbol_sz, "%s_%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   cstr_replace(symbol, '/', '_');
+}
+
 static jobject
 JNIEnv_CallObjectMethodV(JNIEnv *p0, jobject p1, jmethodID p2, va_list p3)
 {
    assert(p0 && p1 && p2);
-   struct jvm *jvm = jnienv_get_jvm(p0);
-   struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
-   return NULL;
+   char symbol[255];
+   jvm_form_symbol(jnienv_get_jvm(p0), p2, symbol, sizeof(symbol));
+   jobject (*fun)(JNIEnv*, jobject, va_list) = create_wrapper(symbol, dlsym(RTLD_DEFAULT, symbol));
+   return fun(p0, p1, p3);
 }
 
 static jobject
@@ -1141,8 +1191,6 @@ JNIEnv_SetDoubleField(JNIEnv* p0, jobject p1, jfieldID p2, jdouble p3)
 static jmethodID
 JNIEnv_GetStaticMethodID(JNIEnv* p0, jclass klass, const char* name, const char* sig)
 {
-   assert(p0 && klass && name && sig);
-   printf("%s::%s\n", name, sig);
    return jvm_make_method(jnienv_get_jvm(p0), klass, name, sig);
 }
 
@@ -1893,7 +1941,7 @@ jvm_register_native_method(struct jvm *jvm, const jclass klass, const JNINativeM
    jvm_string_set_cstr(&jvm->methods[i].method.name, method->name, true);
    jvm_string_set_cstr(&jvm->methods[i].method.signature, method->signature, true);
    jvm->methods[i].function = method->fnPtr;
-   printf("%s::%s\n", jvm_get_object(jvm, klass)->klass.name.data, method->name);
+   printf("%s::%s::%s\n", jvm_get_object(jvm, klass)->klass.name.data, method->name, method->signature);
 }
 
 static jint
@@ -2029,7 +2077,6 @@ trace(const char *const symbol)
     printf("trace: %s\n", symbol);
 }
 
-extern void* create_wrapper(const char *const symbol, void *function);
 #define WRAP(x) create_wrapper(#x, x)
 
 static void
@@ -2351,5 +2398,5 @@ jvm_init(struct jvm *jvm)
    *jvm = (struct jvm){0};
    vm_init(&jvm->vm, &jvm->invoke);
    env_init(&jvm->env, &jvm->native);
-   jvm_make_class(jvm, "java.lang.Class");
+   jvm_make_class(jvm, "java/lang/Class");
 }

@@ -35,6 +35,7 @@ struct jvm_object {
 
    enum jvm_object_type {
       JVM_OBJECT_NONE,
+      JVM_OBJECT_OPAQUE,
       JVM_OBJECT_ARRAY,
       JVM_OBJECT_METHOD,
       JVM_OBJECT_CLASS,

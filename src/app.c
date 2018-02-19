@@ -4,7 +4,7 @@
 #include <dlfcn.h>
 #include <err.h>
 #include <assert.h>
-#include "fakejvm/jvm.h"
+#include "jvm/jvm.h"
 
 extern void *apkenv_android_dlopen(const char*, int);
 extern void *apkenv_android_dlclose(void*);
