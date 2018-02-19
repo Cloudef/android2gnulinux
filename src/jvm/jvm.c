@@ -2071,12 +2071,6 @@ JNIEnv_ReleaseStringUTFChars(JNIEnv *env, jstring string, const char *utf)
    assert(env && string && utf);
 }
 
-static void
-trace(const char *const symbol)
-{
-    printf("trace: %s\n", symbol);
-}
-
 #define WRAP(x) create_wrapper(#x, x)
 
 static void
