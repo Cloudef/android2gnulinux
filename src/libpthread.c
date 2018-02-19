@@ -197,3 +197,12 @@ bionic_pthread_cond_signal(bionic_cond_t *cond)
    INIT_IF_NOT_MAPPED(cond, default_pthread_cond_init);
    return pthread_cond_signal(cond->glibc);
 }
+
+int
+bionic_pthread_cond_wait(bionic_cond_t *cond, bionic_mutex_t *mutex)
+{
+   assert(cond && mutex);
+   INIT_IF_NOT_MAPPED(cond, default_pthread_cond_init);
+   INIT_IF_NOT_MAPPED(mutex, default_pthread_mutex_init);
+   return pthread_cond_wait(cond->glibc, mutex->glibc);
+}
