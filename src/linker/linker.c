@@ -415,7 +415,6 @@ _Unwind_Ptr apkenv_android_dl_unwind_find_exidx(_Unwind_Ptr pc, int *pcount)
 {
     soinfo *si;
     unsigned addr = (unsigned)pc;
-
     for (si = apkenv_solist; si != 0; si = si->next){
         if ((addr >= si->base) && (addr < (si->base + si->size))) {
             *pcount = si->ARM_exidx_count;
@@ -435,14 +434,12 @@ apkenv_android_dl_iterate_phdr(int (*cb)(struct dl_phdr_info *info, size_t size,
     soinfo *si;
     struct dl_phdr_info dl_info;
     int rv = 0;
-
     for (si = apkenv_solist; si != NULL; si = si->next) {
         dl_info.dlpi_addr = si->linkmap.l_addr;
         dl_info.dlpi_name = si->linkmap.l_name;
         dl_info.dlpi_phdr = (void*)si->phdr;
         dl_info.dlpi_phnum = si->phnum;
-        rv = cb(&dl_info, sizeof (struct dl_phdr_info), data);
-        if (rv != 0)
+        if ((rv = cb(&dl_info, sizeof (struct dl_phdr_info), data)) != 0)
             break;
     }
     return rv;
@@ -1427,7 +1424,11 @@ static int apkenv_reloc_library(soinfo *si, Elf32_Rel *rel, unsigned count)
             sym_name = (char *)(strtab + symtab[sym].st_name);
             memcpy(wrap_sym_name + 7, sym_name, MIN(sizeof(wrap_sym_name) - 7, strlen(sym_name)));
             sym_addr = 0;
-            if ((sym_addr = dlsym(RTLD_DEFAULT, wrap_sym_name))) {
+
+            if (!strcmp(sym_name, "dl_iterate_phdr")) {
+                // FIXME: hack, move to libc.so
+                sym_addr = apkenv_android_dl_iterate_phdr;
+            } else if ((sym_addr = dlsym(RTLD_DEFAULT, wrap_sym_name))) {
                LINKER_DEBUG_PRINTF("%s hooked symbol %s to %x\n", si->name, wrap_sym_name, sym_addr);
             } else if ((sym_addr = dlsym(RTLD_DEFAULT, sym_name))) {
                LINKER_DEBUG_PRINTF("%s hooked symbol %s to %x\n", si->name, sym_name, sym_addr);
