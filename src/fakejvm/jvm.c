@@ -101,6 +101,7 @@ jvm_object_release(struct jvm_object *o)
       release_string,
    };
 
+   assert(o->type < JVM_OBJECT_LAST);
    destructor[o->type](o);
    *o = (struct jvm_object){0};
 }
@@ -140,6 +141,8 @@ compare_string(const struct jvm_object *a, const struct jvm_object *b)
 static jobject
 jvm_find_object(struct jvm *jvm, const struct jvm_object *o)
 {
+   assert(jvm && o && o->type != JVM_OBJECT_NONE);
+
    bool (*comparator[])(const struct jvm_object *a, const struct jvm_object *b) = {
       NULL,
       compare_array,
@@ -148,11 +151,11 @@ jvm_find_object(struct jvm *jvm, const struct jvm_object *o)
       compare_string,
    };
 
-   assert(jvm && o);
    for (uintptr_t i = 0; i < ARRAY_SIZE(jvm->objects); ++i) {
       if (o->type != jvm->objects[i].type)
          continue;
 
+      assert(o->type < JVM_OBJECT_LAST);
       if (comparator[o->type](o, &jvm->objects[i]))
          return (void*)(i + 1);
    }
@@ -160,13 +163,46 @@ jvm_find_object(struct jvm *jvm, const struct jvm_object *o)
    return 0;
 }
 
+static jclass
+jvm_make_class(struct jvm *jvm, const char *name);
+
+static void
+jvm_assing_default_class(struct jvm *jvm, struct jvm_object *o)
+{
+   assert(jvm && o);
+
+   switch (o->type) {
+      case JVM_OBJECT_METHOD:
+         o->this_klass = jvm_make_class(jvm, "java.lang.reflect.Method");
+         break;
+
+      case JVM_OBJECT_STRING:
+         o->this_klass = jvm_make_class(jvm, "java.lang.String");
+         break;
+
+      case JVM_OBJECT_NONE:
+      case JVM_OBJECT_ARRAY:
+      case JVM_OBJECT_CLASS:
+         // arrays have unique classes which is handled on jvm_new_array
+         // jvm_make_class points class's this_class to first object, which is class definition for a class
+         assert(0 && "epic failure");
+         break;
+   }
+}
+
 static jobject
 jvm_add_object(struct jvm *jvm, const struct jvm_object *o)
 {
+   assert(jvm && o);
+
    uintptr_t i;
    for (i = 0; i < ARRAY_SIZE(jvm->objects) && jvm->objects[i].type != JVM_OBJECT_NONE; ++i);
    assert(i < ARRAY_SIZE(jvm->objects) && "jvm object limit reached!");
    jvm->objects[i] = *o;
+
+   if (!jvm->objects[i].this_klass)
+      jvm_assing_default_class(jvm, &jvm->objects[i]);
+
    return (void*)(i + 1);
 }
 
@@ -215,13 +251,20 @@ JNIEnv_DefineClass(JNIEnv* p0, const char* p1, jobject p2, const jbyte* p3, jsiz
 }
 
 static jclass
+jvm_make_class(struct jvm *jvm, const char *name)
+{
+   assert(jvm && name);
+   struct jvm_object o = { .this_klass = (jclass)1, .type = JVM_OBJECT_CLASS };
+   jvm_string_set_cstr(&o.klass.name, name, true);
+   return jvm_add_object_if_not_there(jvm, &o);
+}
+
+static jclass
 JNIEnv_FindClass(JNIEnv* p0, const char* p1)
 {
    assert(p0 && p1);
    printf("%s\n", p1);
-   struct jvm_object o = { .type = JVM_OBJECT_CLASS };
-   jvm_string_set_cstr(&o.klass.name, p1, true);
-   return jvm_add_object_if_not_there(jnienv_get_jvm(p0), &o);
+   return jvm_make_class(jnienv_get_jvm(p0), p1);
 }
 
 static jmethodID
@@ -308,6 +351,7 @@ JNIEnv_PopLocalFrame(JNIEnv* p0, jobject p1)
 static jobject
 JNIEnv_NewGlobalRef(JNIEnv* p0, jobject p1)
 {
+   // FIXME: add ref counting
    return p1;
 }
 
@@ -330,6 +374,7 @@ JNIEnv_IsSameObject(JNIEnv* p0, jobject p1, jobject p2)
 static jobject
 JNIEnv_NewLocalRef(JNIEnv* p0, jobject p1)
 {
+   // FIXME: add ref counting
    return NULL;
 }
 
@@ -367,8 +412,7 @@ static jclass
 JNIEnv_GetObjectClass(JNIEnv* env, jobject p1)
 {
    assert(env && p1);
-   printf("%p\n", p1);
-   return 0;
+   return jvm_get_object(jnienv_get_jvm(env), p1)->this_klass;
 }
 
 static jboolean
@@ -1567,9 +1611,10 @@ JNIEnv_SetObjectArrayElement(JNIEnv* p0, jobjectArray p1, jsize p2, jobject p3)
 }
 
 static jobject
-jvm_new_array(struct jvm *jvm, const size_t size, const size_t element_sz)
+jvm_new_array(struct jvm *jvm, const size_t size, const size_t element_sz, const char *klass)
 {
    struct jvm_object o = { .array = { .size = size, .element_sz = element_sz }, .type = JVM_OBJECT_ARRAY };
+   o.this_klass = jvm_make_class(jvm, klass);
    o.array.data = calloc(size, element_sz);
    assert(o.array.data);
    return jvm_add_object_if_not_there(jvm, &o);
@@ -1578,50 +1623,50 @@ jvm_new_array(struct jvm *jvm, const size_t size, const size_t element_sz)
 static jbooleanArray
 JNIEnv_NewBooleanArray(JNIEnv* p0, jsize p1)
 {
-   return jvm_new_array(jnienv_get_jvm(p0), p1, sizeof(jboolean));
+   return jvm_new_array(jnienv_get_jvm(p0), p1, sizeof(jboolean), "[Z");
 }
 
 
 static jbyteArray
 JNIEnv_NewByteArray(JNIEnv* p0, jsize p1)
 {
-   return jvm_new_array(jnienv_get_jvm(p0), p1, sizeof(jbyte));
+   return jvm_new_array(jnienv_get_jvm(p0), p1, sizeof(jbyte), "[B");
 }
 
 static jcharArray
 JNIEnv_NewCharArray(JNIEnv* p0, jsize p1)
 {
-   return jvm_new_array(jnienv_get_jvm(p0), p1, sizeof(jchar));
+   return jvm_new_array(jnienv_get_jvm(p0), p1, sizeof(jchar), "[C");
 }
 
 static jshortArray
 JNIEnv_NewShortArray(JNIEnv* p0, jsize p1)
 {
-   return jvm_new_array(jnienv_get_jvm(p0), p1, sizeof(jshort));
+   return jvm_new_array(jnienv_get_jvm(p0), p1, sizeof(jshort), "[S");
 }
 
 static jintArray
 JNIEnv_NewIntArray(JNIEnv* p0, jsize p1)
 {
-   return jvm_new_array(jnienv_get_jvm(p0), p1, sizeof(jint));
+   return jvm_new_array(jnienv_get_jvm(p0), p1, sizeof(jint), "[I");
 }
 
 static jlongArray
 JNIEnv_NewLongArray(JNIEnv* p0, jsize p1)
 {
-   return jvm_new_array(jnienv_get_jvm(p0), p1, sizeof(jlong));
+   return jvm_new_array(jnienv_get_jvm(p0), p1, sizeof(jlong), "[J");
 }
 
 static jfloatArray
 JNIEnv_NewFloatArray(JNIEnv* p0, jsize p1)
 {
-   return jvm_new_array(jnienv_get_jvm(p0), p1, sizeof(jfloat));
+   return jvm_new_array(jnienv_get_jvm(p0), p1, sizeof(jfloat), "[F");
 }
 
 static jdoubleArray
 JNIEnv_NewDoubleArray(JNIEnv* p0, jsize p1)
 {
-   return jvm_new_array(jnienv_get_jvm(p0), p1, sizeof(jdouble));
+   return jvm_new_array(jnienv_get_jvm(p0), p1, sizeof(jdouble), "[D");
 }
 
 static void*
@@ -2272,6 +2317,33 @@ vm_init(JavaVM *vm, struct JNIInvokeInterface *invoke)
    *vm = invoke;
 }
 
+void*
+jvm_get_native_method(struct jvm *jvm, const char *klass, const char *method)
+{
+   for (size_t i = 0; i < ARRAY_SIZE(jvm->methods) && jvm->methods[i].function; ++i) {
+      if (!strcmp(jvm_get_object(jvm, jvm->methods[i].method.klass)->klass.name.data, klass) &&
+          !strcmp(jvm->methods[i].method.name.data, method))
+         return create_wrapper(method, jvm->methods[i].function);
+   }
+   return NULL;
+}
+
+void
+jvm_release(struct jvm *jvm)
+{
+   assert(jvm);
+
+   for (size_t i = 0; i < ARRAY_SIZE(jvm->objects); ++i)
+      jvm_object_release(&jvm->objects[i]);
+
+   for (size_t i = 0; i < ARRAY_SIZE(jvm->methods); ++i) {
+      jvm_string_release(&jvm->methods[i].method.name);
+      jvm_string_release(&jvm->methods[i].method.signature);
+   }
+
+   *jvm = (struct jvm){0};
+}
+
 void
 jvm_init(struct jvm *jvm)
 {
@@ -2279,4 +2351,5 @@ jvm_init(struct jvm *jvm)
    *jvm = (struct jvm){0};
    vm_init(&jvm->vm, &jvm->invoke);
    env_init(&jvm->env, &jvm->native);
+   jvm_make_class(jvm, "java.lang.Class");
 }
