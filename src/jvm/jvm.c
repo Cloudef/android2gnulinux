@@ -196,9 +196,11 @@ jvm_assing_default_class(struct jvm *jvm, struct jvm_object *o)
          break;
 
       case JVM_OBJECT_NONE:
+      case JVM_OBJECT_OPAQUE:
       case JVM_OBJECT_ARRAY:
       case JVM_OBJECT_CLASS:
       case JVM_OBJECT_LAST:
+         // opaque objects should always have `this_class`.
          // arrays have unique classes which is handled on `jvm_new_array`
          // `jvm_make_class` points class's `this_class` to first object, which is class definition for a class
          assert(0 && "epic failure");
