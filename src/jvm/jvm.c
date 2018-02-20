@@ -1207,10 +1207,10 @@ static jobject
 JNIEnv_CallStaticObjectMethodV(JNIEnv* p0, jclass p1, jmethodID p2, va_list p3)
 {
    assert(p0 && p1 && p2);
-   struct jvm *jvm = jnienv_get_jvm(p0);
-   struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
-   return NULL;
+   char symbol[255];
+   jvm_form_symbol(jnienv_get_jvm(p0), p2, symbol, sizeof(symbol));
+   jobject (*fun)(JNIEnv*, jobject, va_list) = wrapper_create(symbol, dlsym(RTLD_DEFAULT, symbol));
+   return fun(p0, p1, p3);
 }
 
 static jobject
@@ -1626,6 +1626,7 @@ static jstring
 JNIEnv_NewStringUTF(JNIEnv* p0, const char* p1)
 {
    assert(p0);
+   printf("%s\n", p1);
    struct jvm_object o = { .type = JVM_OBJECT_STRING };
    jvm_string_set_cstr(&o.string, p1, true);
    return jvm_add_object_if_not_there(jnienv_get_jvm(p0), &o);
@@ -2061,12 +2062,13 @@ JNIEnv_GetDirectBufferCapacity(JNIEnv* p0, jobject p1)
 const char*
 JNIEnv_GetStringUTFChars(JNIEnv *env, jstring string, jboolean *isCopy)
 {
-   assert(env && string);
+   assert(env);
 
    if (isCopy)
       *isCopy = JNI_FALSE;
 
-   return jvm_get_object(jnienv_get_jvm(env), string)->string.data;
+   printf("%s\n", (string ? jvm_get_object(jnienv_get_jvm(env), string)->string.data : "(null)"));
+   return (string ? jvm_get_object(jnienv_get_jvm(env), string)->string.data : "(null)");
 }
 
 static void

@@ -49,10 +49,11 @@ native: runtime/libdl.so runtime/libc.so runtime/libpthread.so runtime/libandroi
 runtime/libjvm-java.so: private CPPFLAGS += -D_GNU_SOURCE
 runtime/libjvm-java.so: runtime src/libjvm-java.c
 runtime/libjvm-android.so: runtime src/libjvm-android.c
-java: runtime/libjvm-java.so runtime/libjvm-android.so
+runtime/libjvm-jnibridge.so: runtime src/libjvm-jnibridge.c
+java: runtime/libjvm-java.so runtime/libjvm-android.so runtime/libjvm-jnibridge.so
 
 app: private LDLIBS += -ldl -Wl,-rpath,runtime runtime/libdl.so runtime/libpthread.so
-app: private LDLIBS += runtime/libjvm-java.so runtime/libjvm-android.so
+app: private LDLIBS += runtime/libjvm-java.so runtime/libjvm-android.so runtime/libjvm-jnibridge.so
 app: wrapper.a src/app.c native jvm.a java
 
 install-bin: $(bins)

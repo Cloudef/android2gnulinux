@@ -14,8 +14,16 @@ java_lang_System_load(JNIEnv *env, jobject object, va_list args)
    const char *lib = (*env)->GetStringUTFChars(env, va_arg(args, jstring), NULL);
    va_end(args);
    printf("%s\n", lib);
-   // FIXME: should handle loading properly
-   // bionic_dlopen(lib, RTLD_NOW | RTLD_GLOBAL);
+
+   void *handle = bionic_dlopen(lib, RTLD_NOW | RTLD_GLOBAL);
+   assert(handle);
+
+   void* (*JNI_OnLoad)(void*, void*);
+   if ((JNI_OnLoad = bionic_dlsym(handle, "JNI_OnLoad"))) {
+      JavaVM *vm;
+      (*env)->GetJavaVM(env, &vm);
+      JNI_OnLoad(vm, NULL);
+   }
 }
 
 jclass
@@ -42,7 +50,6 @@ java_lang_ClassLoader_findLibrary(JNIEnv *env, jobject object, va_list args)
    char lib[255];
    snprintf(lib, sizeof(lib), "lib%s.so", (*env)->GetStringUTFChars(env, va_arg(args, jstring), NULL));
    va_end(args);
-   printf("%s\n", lib);
    return (*env)->NewStringUTF(env, lib);
 }
 
@@ -67,4 +74,12 @@ java_util_Iterator_hasNext(JNIEnv *env, jobject object, va_list args)
 {
    assert(env && object);
    return false;
+}
+
+jstring
+java_io_File_getPath(JNIEnv *env, jobject object, va_list args)
+{
+   assert(env && object);
+   // FIXME: see comment on `android_content_Context_getExternalFilesDir`
+   return (*env)->NewStringUTF(env, "tmp");
 }

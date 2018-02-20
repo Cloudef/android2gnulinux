@@ -7,6 +7,9 @@
 #include "linker/dlfcn.h"
 #include "jvm/jvm.h"
 
+jstring
+android_content_Context_getPackageCodePath(JNIEnv *env, jobject object, va_list args);
+
 int
 main(int argc, const char *argv[])
 {
@@ -51,12 +54,10 @@ main(int argc, const char *argv[])
       void (*native_soft_input_closed)(JNIEnv*, jobject) = jvm_get_native_method(&jvm, unity_player_class, "nativeSoftInputClosed");
       void (*native_soft_input_canceled)(JNIEnv*, jobject, jboolean) = jvm_get_native_method(&jvm, unity_player_class, "nativeSoftInputCanceled");
       native_init(&jvm.env, context, context);
-      native_file(&jvm.env, context, jvm.native.NewStringUTF(&jvm.env, "./file.apk"));
+      native_file(&jvm.env, context, android_content_Context_getPackageCodePath(&jvm.env, context, 0));
       native_done(&jvm.env, context);
       native_recreate_gfx_state(&jvm.env, context, context);
-      puts("ASD");
       native_render(&jvm.env, (jobject)1);
-      puts("LOL");
 
       printf("unloading module: %s\n", argv[1]);
       bionic_dlclose(handle);
