@@ -77,7 +77,25 @@ you should check it out. Also helpful resource for this project.
 Very badly documented project, but I guess it has some overlap with this project?
 Seems to be mainly aimed for using android GPU drivers on GNU/Linux and nothing else really.
 
+## Contributing
+
+Currently it's not yet contribution friendly. When time comes, I'll write more detailed topic on this.
+Project also needs some regression testing for all the functions that will be implemented. As for implementing stuff,
+people should only implement the stuff some application needs. Lets not implement anything that doesn't get used.
+
 ## Q & A
+
+### Why? I still don't get what this is for...
+
+Basically, most android games are just native libraries with very small java entrypoint that does some boilerplate app setup,
+and few calls to the native library. Native library may communicate back to java through JNI, but usually the java parts are
+very small in these kinds of applications. Thus these kind of applications will work fine with even barebones JNI/JVM
+implementation which doesn't neccessary even have to be very "correct" :). To use the native libraries on GNU systems though
+we need to use custom linker as bionic's linker is incompatible with glibc. Similarly bionic libc is incompatible with glibc
+and we have to handle these differences to be able to use android libraries on GNU/linux. We also have to implement the
+system libraries that exists on android, but not on traditional GNU/Linux, such as the stuff in AOSP that handle window/context
+creation, input and such. These implementations can be valuable for porters, or even application developers as some interfaces
+may be very clean.
 
 ### Why not use dalvikvm?
 
@@ -92,7 +110,16 @@ possible for someone to use dalvikvm and android java libraries/services for the
 gonna do and maintain that work and it doesn't feel too clunky/hacky/invasive I have nothing against such code in
 this project. (aka, the JNI/JVM implementation is not hardcoded)
 
+### Wait so this also implements java libraries in C, can we use these implementations from java?
+
+This is interesting and weird question at the same time. But yes, we could generate java classes that just specifies each
+method as native and thus calls our C implementation. However at current scope these implementations are not very useful.
+The goal is to just provide some barebones to get the interesting android applications to work. Correctness is not guaranteed!
+This project may be useful for NDK development however, basically anything where you don't use java much nor need a very
+"correct java implementation" :).
+
 ### How about arm libraries?
 
 You can use qemu. For hw acceleration, we could use custom libGLES libs that communicate with host system. Though
 such libraries may exist already, maybe even inside qemu project.. I haven't researched.
+
