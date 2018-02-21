@@ -63,7 +63,7 @@ wrapper_create(const char *const symbol, void *function)
     memcpy(fun + (&wrapper_trace - &wrapper_start) + 1, (uintptr_t[]){ (uintptr_t)trace }, sizeof(uintptr_t));
     memcpy(fun + (&wrapper_call - &wrapper_start) + 1, &function, sizeof(function));
 #else
-#   error "should not happen"
+#   error "you forgot to implement the pointer setups for your asm platform"
 #endif
     mprotect(fun, sz, PROT_READ | PROT_EXEC);
     return fun;
