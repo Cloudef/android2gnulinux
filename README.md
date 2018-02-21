@@ -48,8 +48,8 @@ If for some reason one wants minimal library for either PORTING or RUNTIME
 task, here are the rules you can apply for symbol removal:
 
 ```
-PORTING = Remove all symbols with prefix `bionic_`. Don't do this if you need `bionic_dlopen` from `runtime/libdl.so`.
-RUNTIME = Remove the symbol if there also exists the same symbol with a `bionic_` prefix, retaining only the `bionic_` edition.
+PORTING: Remove all symbols with prefix `bionic_`. Don't do this if you need `bionic_dlopen` from `runtime/libdl.so`.
+RUNTIME: Remove the symbol if there also exists the same symbol with a `bionic_` prefix, retaining only the `bionic_` edition.
 ```
 
 That said, the libraries are pretty small anyways.
