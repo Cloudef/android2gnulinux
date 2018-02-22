@@ -7,6 +7,7 @@
 #include "dlfcn.h"
 #include "jvm.h"
 #include "wrapper/wrapper.h"
+#include "wrapper/verbose.h"
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 #define container_of(ptr, type, member) ((type *)((char *)(1 ? (ptr) : &((type *)0)->member) - offsetof(type, member)))
@@ -280,7 +281,7 @@ static jclass
 JNIEnv_FindClass(JNIEnv* p0, const char* p1)
 {
    assert(p0 && p1);
-   printf("%s\n", p1);
+   verbose("%s", p1);
    return jvm_make_class(jnienv_get_jvm(p0), p1);
 }
 
@@ -437,7 +438,7 @@ static jclass
 JNIEnv_GetObjectClass(JNIEnv* env, jobject p1)
 {
    assert(env && p1);
-   printf("%u\n", (uint32_t)(uintptr_t)p1);
+   verbose("%u", (uint32_t)(uintptr_t)p1);
    return jvm_get_object(jnienv_get_jvm(env), p1)->this_klass;
 }
 
@@ -451,7 +452,7 @@ static jmethodID
 jvm_make_method(struct jvm *jvm, jclass klass, const char *name, const char *sig)
 {
    assert(jvm && klass && name && sig);
-   printf("%s::%s::%s\n", jvm_get_object(jvm, klass)->klass.name.data, name, sig);
+   verbose("%s::%s::%s", jvm_get_object(jvm, klass)->klass.name.data, name, sig);
    struct jvm_object o = { .method.klass = klass, .type = JVM_OBJECT_METHOD };
    jvm_string_set_cstr(&o.method.name, name, true);
    jvm_string_set_cstr(&o.method.signature, sig, true);
@@ -489,7 +490,7 @@ jvm_form_symbol(struct jvm *jvm, jmethodID method_id, char *symbol, const size_t
 {
    assert(jvm && method_id);
    struct jvm_method *method = &jvm_get_object(jvm, method_id)->method;
-   printf("%s::%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data, method->signature.data);
+   verbose("%s::%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data, method->signature.data);
    snprintf(symbol, symbol_sz, "%s_%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    cstr_replace(symbol, '/', '_');
    cstr_replace(symbol, '$', '_');
@@ -511,7 +512,7 @@ JNIEnv_CallObjectMethodA(JNIEnv* p0, jobject p1, jmethodID p2, jvalue* p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return NULL;
 }
 
@@ -521,7 +522,7 @@ JNIEnv_CallBooleanMethod(JNIEnv* p0, jobject p1, jmethodID p2, ...)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -541,7 +542,7 @@ JNIEnv_CallBooleanMethodA(JNIEnv* p0, jobject p1, jmethodID p2, jvalue* p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -551,7 +552,7 @@ JNIEnv_CallByteMethod(JNIEnv* p0, jobject p1, jmethodID p2, ...)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -561,7 +562,7 @@ JNIEnv_CallByteMethodV(JNIEnv* p0, jobject p1, jmethodID p2, va_list p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -571,7 +572,7 @@ JNIEnv_CallByteMethodA(JNIEnv* p0, jobject p1, jmethodID p2, jvalue* p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -581,7 +582,7 @@ JNIEnv_CallCharMethod(JNIEnv* p0, jobject p1, jmethodID p2, ...)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -591,7 +592,7 @@ JNIEnv_CallCharMethodV(JNIEnv* p0, jobject p1, jmethodID p2, va_list p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -601,7 +602,7 @@ JNIEnv_CallCharMethodA(JNIEnv* p0, jobject p1, jmethodID p2, jvalue* p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -611,7 +612,7 @@ JNIEnv_CallShortMethod(JNIEnv* p0, jobject p1, jmethodID p2, ...)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -621,7 +622,7 @@ JNIEnv_CallShortMethodV(JNIEnv* p0, jobject p1, jmethodID p2, va_list p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -631,7 +632,7 @@ JNIEnv_CallShortMethodA(JNIEnv* p0, jobject p1, jmethodID p2, jvalue* p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -641,7 +642,7 @@ JNIEnv_CallIntMethod(JNIEnv* p0, jobject p1, jmethodID p2, ...)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -661,7 +662,7 @@ JNIEnv_CallIntMethodA(JNIEnv* p0, jobject p1, jmethodID p2, jvalue* p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -671,7 +672,7 @@ JNIEnv_CallLongMethod(JNIEnv* p0, jobject p1, jmethodID p2, ...)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -681,7 +682,7 @@ JNIEnv_CallLongMethodV(JNIEnv* p0, jobject p1, jmethodID p2, va_list p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -691,7 +692,7 @@ JNIEnv_CallLongMethodA(JNIEnv* p0, jobject p1, jmethodID p2, jvalue* p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -701,7 +702,7 @@ JNIEnv_CallFloatMethod(JNIEnv* p0, jobject p1, jmethodID p2, ...)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -711,7 +712,7 @@ JNIEnv_CallFloatMethodV(JNIEnv* p0, jobject p1, jmethodID p2, va_list p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -721,7 +722,7 @@ JNIEnv_CallFloatMethodA(JNIEnv* p0, jobject p1, jmethodID p2, jvalue* p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -731,7 +732,7 @@ JNIEnv_CallDoubleMethod(JNIEnv* p0, jobject p1, jmethodID p2, ...)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -741,7 +742,7 @@ JNIEnv_CallDoubleMethodV(JNIEnv* p0, jobject p1, jmethodID p2, va_list p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -751,7 +752,7 @@ JNIEnv_CallDoubleMethodA(JNIEnv* p0, jobject p1, jmethodID p2, jvalue* p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -761,7 +762,7 @@ JNIEnv_CallVoidMethod(JNIEnv* p0, jobject p1, jmethodID p2, ...)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
 }
 
 static void
@@ -780,7 +781,7 @@ JNIEnv_CallVoidMethodA(JNIEnv* p0, jobject p1, jmethodID p2, jvalue* p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
 }
 
 static jobject
@@ -789,7 +790,7 @@ JNIEnv_CallNonvirtualObjectMethod(JNIEnv* p0, jobject p1, jclass p2, jmethodID p
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return NULL;
 }
 
@@ -799,7 +800,7 @@ JNIEnv_CallNonvirtualObjectMethodV(JNIEnv* p0, jobject p1, jclass p2, jmethodID 
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return NULL;
 }
 
@@ -809,7 +810,7 @@ JNIEnv_CallNonvirtualObjectMethodA(JNIEnv* p0, jobject p1, jclass p2, jmethodID 
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return NULL;
 }
 
@@ -819,7 +820,7 @@ JNIEnv_CallNonvirtualBooleanMethod(JNIEnv* p0, jobject p1, jclass p2, jmethodID 
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -829,7 +830,7 @@ JNIEnv_CallNonvirtualBooleanMethodV(JNIEnv* p0, jobject p1, jclass p2, jmethodID
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -839,7 +840,7 @@ JNIEnv_CallNonvirtualBooleanMethodA(JNIEnv* p0, jobject p1, jclass p2, jmethodID
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -849,7 +850,7 @@ JNIEnv_CallNonvirtualByteMethod(JNIEnv* p0, jobject p1, jclass p2, jmethodID p3,
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -859,7 +860,7 @@ JNIEnv_CallNonvirtualByteMethodV(JNIEnv* p0, jobject p1, jclass p2, jmethodID p3
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -869,7 +870,7 @@ JNIEnv_CallNonvirtualByteMethodA(JNIEnv* p0, jobject p1, jclass p2, jmethodID p3
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -879,7 +880,7 @@ JNIEnv_CallNonvirtualCharMethod(JNIEnv* p0, jobject p1, jclass p2, jmethodID p3,
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -889,7 +890,7 @@ JNIEnv_CallNonvirtualCharMethodV(JNIEnv* p0, jobject p1, jclass p2, jmethodID p3
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -899,7 +900,7 @@ JNIEnv_CallNonvirtualCharMethodA(JNIEnv* p0, jobject p1, jclass p2, jmethodID p3
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -909,7 +910,7 @@ JNIEnv_CallNonvirtualShortMethod(JNIEnv* p0, jobject p1, jclass p2, jmethodID p3
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -919,7 +920,7 @@ JNIEnv_CallNonvirtualShortMethodV(JNIEnv* p0, jobject p1, jclass p2, jmethodID p
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -929,7 +930,7 @@ JNIEnv_CallNonvirtualShortMethodA(JNIEnv* p0, jobject p1, jclass p2, jmethodID p
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -939,7 +940,7 @@ JNIEnv_CallNonvirtualIntMethod(JNIEnv* p0, jobject p1, jclass p2, jmethodID p3, 
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -949,7 +950,7 @@ JNIEnv_CallNonvirtualIntMethodV(JNIEnv* p0, jobject p1, jclass p2, jmethodID p3,
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -959,7 +960,7 @@ JNIEnv_CallNonvirtualIntMethodA(JNIEnv* p0, jobject p1, jclass p2, jmethodID p3,
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -969,7 +970,7 @@ JNIEnv_CallNonvirtualLongMethod(JNIEnv* p0, jobject p1, jclass p2, jmethodID p3,
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -979,7 +980,7 @@ JNIEnv_CallNonvirtualLongMethodV(JNIEnv* p0, jobject p1, jclass p2, jmethodID p3
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -989,7 +990,7 @@ JNIEnv_CallNonvirtualLongMethodA(JNIEnv* p0, jobject p1, jclass p2, jmethodID p3
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -999,7 +1000,7 @@ JNIEnv_CallNonvirtualFloatMethod(JNIEnv* p0, jobject p1, jclass p2, jmethodID p3
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1009,7 +1010,7 @@ JNIEnv_CallNonvirtualFloatMethodV(JNIEnv* p0, jobject p1, jclass p2, jmethodID p
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1019,7 +1020,7 @@ JNIEnv_CallNonvirtualFloatMethodA(JNIEnv* p0, jobject p1, jclass p2, jmethodID p
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1029,7 +1030,7 @@ JNIEnv_CallNonvirtualDoubleMethod(JNIEnv* p0, jobject p1, jclass p2, jmethodID p
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1039,7 +1040,7 @@ JNIEnv_CallNonvirtualDoubleMethodV(JNIEnv* p0, jobject p1, jclass p2, jmethodID 
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1049,7 +1050,7 @@ JNIEnv_CallNonvirtualDoubleMethodA(JNIEnv* p0, jobject p1, jclass p2, jmethodID 
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1059,7 +1060,7 @@ JNIEnv_CallNonvirtualVoidMethod(JNIEnv* p0, jobject p1, jclass p2, jmethodID p3,
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
 }
 
 static void
@@ -1068,7 +1069,7 @@ JNIEnv_CallNonvirtualVoidMethodV(JNIEnv* p0, jobject p1, jclass p2, jmethodID p3
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
 }
 
 static void
@@ -1077,7 +1078,7 @@ JNIEnv_CallNonvirtualVoidMethodA(JNIEnv* p0, jobject p1, jclass p2, jmethodID p3
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
 }
 
 static jfieldID
@@ -1219,7 +1220,7 @@ JNIEnv_CallStaticObjectMethodA(JNIEnv* p0, jclass p1, jmethodID p2, jvalue* p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return NULL;
 }
 
@@ -1229,7 +1230,7 @@ JNIEnv_CallStaticBooleanMethod(JNIEnv* p0, jclass p1, jmethodID p2, ...)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1239,7 +1240,7 @@ JNIEnv_CallStaticBooleanMethodV(JNIEnv* p0, jclass p1, jmethodID p2, va_list p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1249,7 +1250,7 @@ JNIEnv_CallStaticBooleanMethodA(JNIEnv* p0, jclass p1, jmethodID p2, jvalue* p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1259,7 +1260,7 @@ JNIEnv_CallStaticByteMethod(JNIEnv* p0, jclass p1, jmethodID p2, ...)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1269,7 +1270,7 @@ JNIEnv_CallStaticByteMethodV(JNIEnv* p0, jclass p1, jmethodID p2, va_list p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1279,7 +1280,7 @@ JNIEnv_CallStaticByteMethodA(JNIEnv* p0, jclass p1, jmethodID p2, jvalue* p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1289,7 +1290,7 @@ JNIEnv_CallStaticCharMethod(JNIEnv* p0, jclass p1, jmethodID p2, ...)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1299,7 +1300,7 @@ JNIEnv_CallStaticCharMethodV(JNIEnv* p0, jclass p1, jmethodID p2, va_list p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1309,7 +1310,7 @@ JNIEnv_CallStaticCharMethodA(JNIEnv* p0, jclass p1, jmethodID p2, jvalue* p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1319,7 +1320,7 @@ JNIEnv_CallStaticShortMethod(JNIEnv* p0, jclass p1, jmethodID p2, ...)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1329,7 +1330,7 @@ JNIEnv_CallStaticShortMethodV(JNIEnv* p0, jclass p1, jmethodID p2, va_list p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1339,7 +1340,7 @@ JNIEnv_CallStaticShortMethodA(JNIEnv* p0, jclass p1, jmethodID p2, jvalue* p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1349,7 +1350,7 @@ JNIEnv_CallStaticIntMethod(JNIEnv* p0, jclass p1, jmethodID p2, ...)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1359,7 +1360,7 @@ JNIEnv_CallStaticIntMethodV(JNIEnv* p0, jclass p1, jmethodID p2, va_list p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1369,7 +1370,7 @@ JNIEnv_CallStaticIntMethodA(JNIEnv* p0, jclass p1, jmethodID p2, jvalue* p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1379,7 +1380,7 @@ JNIEnv_CallStaticLongMethod(JNIEnv* p0, jclass p1, jmethodID p2, ...)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1389,7 +1390,7 @@ JNIEnv_CallStaticLongMethodV(JNIEnv* p0, jclass p1, jmethodID p2, va_list p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1399,7 +1400,7 @@ JNIEnv_CallStaticLongMethodA(JNIEnv* p0, jclass p1, jmethodID p2, jvalue* p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1409,7 +1410,7 @@ JNIEnv_CallStaticFloatMethod(JNIEnv* p0, jclass p1, jmethodID p2, ...)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1419,7 +1420,7 @@ JNIEnv_CallStaticFloatMethodV(JNIEnv* p0, jclass p1, jmethodID p2, va_list p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1429,7 +1430,7 @@ JNIEnv_CallStaticFloatMethodA(JNIEnv* p0, jclass p1, jmethodID p2, jvalue* p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1439,7 +1440,7 @@ JNIEnv_CallStaticDoubleMethod(JNIEnv* p0, jclass p1, jmethodID p2, ...)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1449,7 +1450,7 @@ JNIEnv_CallStaticDoubleMethodV(JNIEnv* p0, jclass p1, jmethodID p2, va_list p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1459,7 +1460,7 @@ JNIEnv_CallStaticDoubleMethodA(JNIEnv* p0, jclass p1, jmethodID p2, jvalue* p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
    return 0;
 }
 
@@ -1469,7 +1470,7 @@ JNIEnv_CallStaticVoidMethod(JNIEnv* p0, jclass p1, jmethodID p2, ...)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
 }
 
 static void
@@ -1488,7 +1489,7 @@ JNIEnv_CallStaticVoidMethodA(JNIEnv* p0, jclass p1, jmethodID p2, jvalue* p3)
    assert(p0 && p1 && p2);
    struct jvm *jvm = jnienv_get_jvm(p0);
    struct jvm_method *method = &jvm_get_object(jvm, p2)->method;
-   printf("%s::%s\n", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   verbose("%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
 }
 
 static jfieldID
@@ -1626,7 +1627,7 @@ static jstring
 JNIEnv_NewStringUTF(JNIEnv* p0, const char* p1)
 {
    assert(p0);
-   printf("%s\n", p1);
+   verbose("%s", p1);
    struct jvm_object o = { .type = JVM_OBJECT_STRING };
    jvm_string_set_cstr(&o.string, p1, true);
    return jvm_add_object_if_not_there(jnienv_get_jvm(p0), &o);
@@ -1946,7 +1947,7 @@ jvm_register_native_method(struct jvm *jvm, const jclass klass, const JNINativeM
    jvm_string_set_cstr(&jvm->methods[i].method.name, method->name, true);
    jvm_string_set_cstr(&jvm->methods[i].method.signature, method->signature, true);
    jvm->methods[i].function = method->fnPtr;
-   printf("%s::%s::%s\n", jvm_get_object(jvm, klass)->klass.name.data, method->name, method->signature);
+   verbose("%s::%s::%s", jvm_get_object(jvm, klass)->klass.name.data, method->name, method->signature);
 }
 
 static jint
@@ -2067,7 +2068,7 @@ JNIEnv_GetStringUTFChars(JNIEnv *env, jstring string, jboolean *isCopy)
    if (isCopy)
       *isCopy = JNI_FALSE;
 
-   printf("%s\n", (string ? jvm_get_object(jnienv_get_jvm(env), string)->string.data : "(null)"));
+   verbose("%s", (string ? jvm_get_object(jnienv_get_jvm(env), string)->string.data : "(null)"));
    return (string ? jvm_get_object(jnienv_get_jvm(env), string)->string.data : "(null)");
 }
 

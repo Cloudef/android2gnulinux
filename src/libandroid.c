@@ -3,29 +3,31 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
-#include "jvm/jni.h"
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
+
+#include "jvm/jni.h"
 
 // System
 
 #define PROP_NAME_MAX   32
 #define PROP_VALUE_MAX  92
 
-int __system_property_get(const char *name, char *value)
+int
+__system_property_get(const char *name, char *value)
 {
    return 0;
 }
 
 // AConfiguration
 
-struct AConfiguration
-{
+struct AConfiguration {
+   char nop;
 };
 
-struct AAssetManager
-{
+struct AAssetManager {
+   char nop;
 };
 
 struct AConfiguration*
@@ -47,8 +49,8 @@ AConfiguration_fromAssetManager(struct AConfiguration *out, struct AAssetManager
 
 // ALooper
 
-static struct ALooper
-{
+static struct ALooper {
+   char nop;
 } thread_looper;
 
 typedef void* ALooper_callbackFunc;
@@ -85,6 +87,7 @@ ALooper_pollOnce(int timeoutMillis, int *outFd, int *outEvents, void **outData)
 // ASensor
 
 struct ASensor {
+   char nop;
 };
 
 const char*
@@ -118,9 +121,11 @@ ASensor_getMinDelay(struct ASensor const *sensor)
 }
 
 struct ASensorEvent {
+   char nop;
 };
 
 struct ASensorEventQueue {
+   char nop;
 };
 
 int
@@ -154,9 +159,11 @@ ASensorEventQueue_getEvents(struct ASensorEventQueue *queue, struct ASensorEvent
 }
 
 struct ASensorManager {
+   char nop;
 };
 
 struct ASensorList {
+   char nop;
 };
 
 struct ASensorManager*
@@ -191,8 +198,8 @@ ASensorManager_destroyEventQueue(struct ASensorManager *manager, struct ASensorE
 
 // AInput
 
-struct AInputEvent
-{
+struct AInputEvent {
+   char nop;
 };
 
 int32_t
@@ -381,8 +388,8 @@ AKeyEvent_getAction(const struct AInputEvent *key_event)
    return 0;
 }
 
-struct AInputQueue
-{
+struct AInputQueue {
+   char nop;
 };
 
 void
@@ -420,23 +427,22 @@ AInputQueue_finishEvent(struct AInputQueue *queue, struct AInputEvent *event, in
 
 // ANative
 
-struct ANativeWindow
-{
+struct ANativeWindow {
    GLFWwindow *glfw;
 };
 
-struct ANativeWindow_Buffer
-{
+struct ANativeWindow_Buffer {
+   char nop;
 };
 
-struct ARect
-{
+struct ARect {
+   char nop;
 };
 
 static void
 glfw_error_cb(int code, const char *error)
 {
-   printf("%d: %s\n", code, error);
+   fprintf(stderr, "glfw: (%d) %s\n", code, error);
 }
 
 struct ANativeWindow*
@@ -449,7 +455,7 @@ ANativeWindow_fromSurface(JNIEnv* env, jobject surface)
       return NULL;
 
    glfwInit();
-   printf("glfw: %s\n", glfwGetVersionString());
+   fprintf(stderr, "glfw: %s\n", glfwGetVersionString());
    glfwSetErrorCallback(glfw_error_cb);
    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);

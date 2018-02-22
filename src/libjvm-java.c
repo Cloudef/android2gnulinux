@@ -6,6 +6,8 @@
 #include <err.h>
 #include <dlfcn.h>
 #include "jvm/jni.h"
+#include "linker/dlfcn.h"
+#include "wrapper/verbose.h"
 
 void
 java_lang_System_load(JNIEnv *env, jobject object, va_list args)
@@ -13,16 +15,20 @@ java_lang_System_load(JNIEnv *env, jobject object, va_list args)
    assert(env && object);
    const char *lib = (*env)->GetStringUTFChars(env, va_arg(args, jstring), NULL);
    va_end(args);
-   printf("%s\n", lib);
+   verbose("%s", lib);
 
    void *handle = bionic_dlopen(lib, RTLD_NOW | RTLD_GLOBAL);
    assert(handle);
 
-   void* (*JNI_OnLoad)(void*, void*);
-   if ((JNI_OnLoad = bionic_dlsym(handle, "JNI_OnLoad"))) {
+   union {
+      void *ptr;
+      void* (*fun)(void*, void*);
+   } JNI_OnLoad;
+
+   if ((JNI_OnLoad.ptr = bionic_dlsym(handle, "JNI_OnLoad"))) {
       JavaVM *vm;
       (*env)->GetJavaVM(env, &vm);
-      JNI_OnLoad(vm, NULL);
+      JNI_OnLoad.fun(vm, NULL);
    }
 }
 

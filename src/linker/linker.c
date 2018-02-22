@@ -119,7 +119,7 @@ static const char *apkenv_ldpreload_names[LDPRELOAD_MAX + 1];
 static soinfo *apkenv_preloads[LDPRELOAD_MAX + 1];
 
 #if LINKER_DEBUG
-int apkenv_debug_verbosity = 5;
+int apkenv_debug_verbosity = 0;
 #endif
 
 static int apkenv_pid;
@@ -1133,6 +1133,10 @@ apkenv_load_library(const char *name)
     Elf32_Ehdr *hdr;
 
     if(fd == -1) {
+        if (dlopen(name, RTLD_NOW | RTLD_GLOBAL)) {
+            DEBUG("Loaded %s with glibc dlopen\n", name);
+            return NULL;
+        }
 #if !LINKER_DEBUG
         if (!is_lib_optional(name))
 #endif
@@ -1365,12 +1369,9 @@ static int apkenv_reloc_library(soinfo *si, Elf32_Rel *rel, unsigned count)
             memcpy(wrap_sym_name + 7, sym_name, MIN(sizeof(wrap_sym_name) - 7, strlen(sym_name)));
             sym_addr = 0;
 
-            if (!strcmp(sym_name, "dl_iterate_phdr")) {
-                // FIXME: hack, move to libc.so
-                sym_addr = bionic_dl_iterate_phdr;
-            } else if ((sym_addr = dlsym(RTLD_DEFAULT, wrap_sym_name))) {
+            if ((sym_addr = (intptr_t)dlsym(RTLD_DEFAULT, wrap_sym_name))) {
                LINKER_DEBUG_PRINTF("%s hooked symbol %s to %x\n", si->name, wrap_sym_name, sym_addr);
-            } else if ((sym_addr = dlsym(RTLD_DEFAULT, sym_name))) {
+            } else if ((sym_addr = (intptr_t)dlsym(RTLD_DEFAULT, sym_name))) {
                LINKER_DEBUG_PRINTF("%s hooked symbol %s to %x\n", si->name, sym_name, sym_addr);
             }
 #if 0
@@ -1762,8 +1763,8 @@ static int apkenv_nullify_closed_stdio (void)
 
 static void apkenv_wrap_function(void *sym_addr, char *sym_name, int is_thumb, soinfo *si)
 {
-    void *hook = NULL;
 #ifdef APKENV_LATEHOOKS
+    void *hook = NULL;
     if((hook = apkenv_get_hooked_symbol(sym_name, 0)) != NULL)
     {
         // if we have a hook redirect the call to that by overwriting
@@ -2068,13 +2069,8 @@ static int apkenv_link_image(soinfo *si, unsigned wr_offset)
         if(d[0] == DT_NEEDED){
             DEBUG("%5d %s needs %s\n", apkenv_pid, si->name, si->strtab + d[1]);
             soinfo *lsi = NULL;
-#if 1
             // if (get_builtin_lib_handle(si->strtab + d[1]) == NULL)
             lsi = apkenv_find_library(si->strtab + d[1]);
-            if (!lsi && dlopen(si->strtab + d[1], RTLD_NOW | RTLD_GLOBAL)) {
-                DEBUG("Loaded %s with glibc dlopen\n", si->strtab + d[1]);
-            }
-#endif
             if(lsi == 0) {
                 /**
                  * XXX Dirty Hack Alarm --thp XXX

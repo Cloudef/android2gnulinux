@@ -9,6 +9,11 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/syscall.h>
+#include  "wrapper/verbose.h"
+
+#ifdef VERBOSE_FUNCTIONS
+#  include "libc-verbose.h"
+#endif
 
 struct bionic_dirent {
    uint64_t d_ino;
@@ -19,6 +24,7 @@ struct bionic_dirent {
 };
 
 struct bionic_sigaction {
+   char nop;
 };
 
 // Stuff that doesn't exist in glibc
@@ -26,7 +32,7 @@ struct bionic_sigaction {
 void
 __assert2(const char* file, int line, const char* function, const char* failed_expression)
 {
-   fprintf(stderr, "%s:%d: %s: assertion \"%s\" failed", file, line, function, failed_expression);
+   fprintf(stderr, "%s:%d: %s: assertion \"%s\" failed\n", file, line, function, failed_expression);
    abort();
 }
 
@@ -39,12 +45,14 @@ gettid(void)
 int
 tgkill(int tgid, int tid, int sig)
 {
+   verbose("%d, %d, %d", tgid, tid, sig);
    return syscall(SYS_tgkill, tgid, tid, sig);
 }
 
 int
 tkill(int tid, int sig)
 {
+   verbose("%d, %d", tid, sig);
    return syscall(SYS_tkill, tid, sig);
 }
 
@@ -66,25 +74,28 @@ bionic___errno(void)
 int
 bionic_stat(const char *restrict path, struct stat *restrict buf)
 {
-   printf("stat: %s\n", path);
+   verbose("%s", path);
    return stat(path, buf);
 }
 
 int
 bionic_lstat(const char *restrict path, struct stat *restrict buf)
 {
+   verbose("%s", path);
    return lstat(path, buf);
 }
 
 int
 bionic_fstat(int fd, struct stat *buf)
 {
+   verbose("%d", fd);
    return fstat(fd, buf);
 }
 
 int
 bionic_fstatat(int dirfd, const char *pathname, void *buf, int flags)
 {
+   verbose("%d, %s", dirfd, pathname);
    return fstatat(dirfd, pathname, buf, flags);
 }
 
@@ -293,7 +304,7 @@ bionic_sysconf_to_glibc_sysconf(int name)
       case 0x009c: return _SC_LEVEL4_CACHE_ASSOC;
       case 0x009d: return _SC_LEVEL4_CACHE_LINESIZE;
       default:
-         assert(0 && "should not happend");
+         assert(0 && "sysconf constant (%d) is not mapped");
    }
    return 0xFFFF;
 }
@@ -302,27 +313,4 @@ long
 bionic_sysconf(int name)
 {
    return sysconf(bionic_sysconf_to_glibc_sysconf(name));
-}
-
-// Debugging
-
-int
-strcmp(const char *s1, const char *s2)
-{
-   printf("%s == %s\n", s1, s2);
-   return strcmp(s1, s2);
-}
-
-int
-strncmp(const char *s1, const char *s2, size_t n)
-{
-   printf("%s == %s (%zu)\n", s1, s2, n);
-   return strncmp(s1, s2, n);
-}
-
-ssize_t
-readlink(const char *path, char *buf, size_t bufsize)
-{
-   printf("%s\n", path);
-   return snprintf(buf, bufsize, "file.apk");
 }

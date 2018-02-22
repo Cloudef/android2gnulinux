@@ -9,7 +9,7 @@ WARNINGS := -Wall -Wextra -Wpedantic -Wformat=2 -Wstrict-aliasing=3 -Wstrict-ove
 
 override CFLAGS ?= -g
 override CFLAGS += -std=c11 $(WARNINGS)
-override CPPFLAGS += -Isrc
+override CPPFLAGS += -Isrc -DANDROID_X86_LINKER -DVERBOSE_FUNCTIONS
 
 bins = app
 all: $(bins) runtime/libc.so runtime/libandroid.so runtime/liblog.so
@@ -26,18 +26,17 @@ $(bins): %:
 runtime:
 	mkdir -p $@
 
-wrapper.a: private CPPFLAGS += -D_GNU_SOURCE -DANDROID_X86_LINKER
-wrapper.a: src/wrapper/wrapper.c
-jvm.a: private CPPFLAGS += -D_GNU_SOURCE
-jvm.a: private CFLAGS += -Wno-unused-variable -Wno-pedantic
-jvm.a: wrapper.a src/jvm/jvm.c
+verbose: src/wrapper/verbose.h
+wrapper.a: private CPPFLAGS += -D_GNU_SOURCE
+wrapper.a: verbose src/wrapper/wrapper.c src/wrapper/wrapper.h
 
-runtime/libdl.so: private CPPFLAGS += -D_GNU_SOURCE -DANDROID_X86_LINKER -DLINKER_DEBUG=1
+runtime/libdl.so: private CPPFLAGS += -D_GNU_SOURCE -DLINKER_DEBUG=1
 runtime/libdl.so: private CFLAGS += -Wno-pedantic -Wno-variadic-macros -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast
 runtime/libdl.so: runtime wrapper.a src/linker/dlfcn.c src/linker/linker.c src/linker/linker_environ.c src/linker/rt.c src/linker/strlcpy.c
 runtime/libc.so: private CPPFLAGS += -D_GNU_SOURCE
+runtime/libc.so: private CFLAGS += -Wno-deprecated-declarations
 runtime/libc.so: private LDLIBS += `pkg-config --libs libbsd`
-runtime/libc.so: runtime src/libc.c
+runtime/libc.so: runtime verbose src/libc.c
 runtime/libpthread.so: private CPPFLAGS += -D_GNU_SOURCE
 runtime/libpthread.so: private LDLIBS += -lpthread
 runtime/libpthread.so: runtime src/libpthread.c
@@ -46,9 +45,12 @@ runtime/libandroid.so: runtime src/libandroid.c
 runtime/liblog.so: runtime src/liblog.c
 native: runtime/libdl.so runtime/libc.so runtime/libpthread.so runtime/libandroid.so runtime/liblog.so
 
+jvm.a: private CPPFLAGS += -D_GNU_SOURCE
+jvm.a: private CFLAGS += -Wno-unused-variable -Wno-pedantic
+jvm.a: wrapper.a src/jvm/jvm.c
 runtime/libjvm-java.so: private CPPFLAGS += -D_GNU_SOURCE
-runtime/libjvm-java.so: runtime src/libjvm-java.c
-runtime/libjvm-android.so: runtime src/libjvm-android.c
+runtime/libjvm-java.so: runtime verbose src/libjvm-java.c
+runtime/libjvm-android.so: runtime verbose src/libjvm-android.c
 runtime/libjvm-jnibridge.so: runtime src/libjvm-jnibridge.c
 java: runtime/libjvm-java.so runtime/libjvm-android.so runtime/libjvm-jnibridge.so
 

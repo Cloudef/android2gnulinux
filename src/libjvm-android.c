@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include "jvm/jni.h"
+#include "wrapper/verbose.h"
 
 jstring
 android_content_Context_getPackageName(JNIEnv *env, jobject object, va_list args)
@@ -23,7 +24,7 @@ android_content_Context_getSharedPreferences(JNIEnv *env, jobject object, va_lis
    assert(env && object);
    jstring str = va_arg(args, jstring);
    (*env)->GetStringUTFChars(env, str, NULL);
-   printf("%d\n", va_arg(args, jint));
+   verbose("%d", va_arg(args, jint));
    va_end(args);
    static jobject sv;
    return (sv ? sv : (sv = (*env)->AllocObject(env, (*env)->FindClass(env, "android/content/SharedPreferences"))));
@@ -34,7 +35,7 @@ android_content_SharedPreferences_getInt(JNIEnv *env, jobject object, va_list ar
 {
    assert(env && object);
    jstring str = va_arg(args, jstring);
-   printf("%s::%d\n", (*env)->GetStringUTFChars(env, str, NULL), va_arg(args, jint));
+   verbose("%s::%d", (*env)->GetStringUTFChars(env, str, NULL), va_arg(args, jint));
    va_end(args);
    return 0;
 }
@@ -60,7 +61,7 @@ android_content_SharedPreferences_Editor_putInt(JNIEnv *env, jobject object, va_
 {
    assert(env && object);
    jstring str = va_arg(args, jstring);
-   printf("%s::%d\n", (*env)->GetStringUTFChars(env, str, NULL), va_arg(args, jint));
+   verbose("%s::%d", (*env)->GetStringUTFChars(env, str, NULL), va_arg(args, jint));
    va_end(args);
    return object;
 }
@@ -100,7 +101,7 @@ android_app_ApplicationErrorReport_getErrorReportReceiver(JNIEnv *env, jobject o
    jstring str = va_arg(args, jstring);
    jint flags = va_arg(args, jint);
    (*env)->GetStringUTFChars(env, str, NULL);
-   printf("%p, %d\n", obj, flags);
+   verbose("%p, %d", obj, flags);
    va_end(args);
    static jobject sv;
    return (sv ? sv : (sv = (*env)->AllocObject(env, (*env)->FindClass(env, "android/content/ComponentName"))));
