@@ -22,11 +22,25 @@ bionic_rename(const char *old, const char *fresh)
    return rename(old, fresh);
 }
 
+int
+bionic_access(const char *path, int amode)
+{
+   verbose("%s (%d)", path, amode);
+   return access(path, amode);
+}
+
 FILE*
 bionic_fopen(const char *path,  const char *mode)
 {
    verbose("%s %s", path, mode);
    return fopen(path, mode);
+}
+
+int
+bionic_mkdir(const char *path, mode_t mode)
+{
+   verbose("%s -> %u", path, mode);
+   return mkdir(path, mode);
 }
 
 DIR*
@@ -39,22 +53,22 @@ bionic_opendir(const char *path)
 int
 bionic_sprintf(char *str, const char *fmt, ...)
 {
-   verbose("%s", fmt);
    va_list ap;
    va_start(ap, fmt);
    int r = vsprintf(str, fmt, ap);
    va_end(ap);
+   verbose("%s == %s", fmt, str);
    return r;
 }
 
 int
 bionic_snprintf(char *str, size_t size, const char *fmt, ...)
 {
-   verbose("%s (%zu)", fmt, size);
    va_list ap;
    va_start(ap, fmt);
    int r = vsnprintf(str, size, fmt, ap);
    va_end(ap);
+   verbose("%s (%zu) == %s", fmt, size, str);
    return r;
 }
 
@@ -63,6 +77,13 @@ bionic_strlen(const char *str)
 {
    verbose("%s", str);
    return strlen(str);
+}
+
+char*
+bionic_strchr(const char *str, int c)
+{
+   verbose("%s %c", str, c);
+   return strchr(str, c);
 }
 
 char*
@@ -114,4 +135,38 @@ bionic_readlink(const char *path, char *buf, size_t bufsize)
 {
    verbose("%s", path);
    return readlink(path, buf, bufsize);
+}
+
+int
+bionic_unlink(const char *path)
+{
+   verbose("%s", path);
+   return unlink(path);
+}
+
+size_t
+bionic_fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
+{
+   char buf[256], fname[256] = {0};
+   snprintf(buf, sizeof(buf), "/proc/self/fd/%d", fileno(stream));
+   readlink(buf, fname, sizeof(fname));
+   verbose("%s (%d)\n%p, %zu, %zu, %p", fname, fileno(stream), ptr, size, nmemb, stream);
+   return fread(ptr, size, nmemb, stream);
+}
+
+size_t
+bionic_fwrite(void *ptr, size_t size, size_t nmemb, FILE *stream)
+{
+   char buf[256], fname[256] = {0};
+   snprintf(buf, sizeof(buf), "/proc/self/fd/%d", fileno(stream));
+   readlink(buf, fname, sizeof(fname));
+   verbose("%s (%d)\n%p, %zu, %zu, %p", fname, fileno(stream), ptr, size, nmemb, stream);
+   return fwrite(ptr, size, nmemb, stream);
+}
+
+char*
+bionic_getenv(const char *name)
+{
+   verbose("%s", name);
+   return getenv(name);
 }
