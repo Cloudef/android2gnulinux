@@ -9,6 +9,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/syscall.h>
+#include <sys/user.h> // PAGE_SIZE, PAGE_SHIFT
+#include <netdb.h> // h_errno
 #include  "wrapper/verbose.h"
 
 #ifdef VERBOSE_FUNCTIONS
@@ -63,12 +65,20 @@ tkill(int tid, int sig)
 
 const char *bionic__ctype_, *bionic__tolower_tab_, *bionic__toupper_tab_;
 char bionic___sF[0x54] = {0};
+unsigned int bionic___page_size = PAGE_SIZE;
 
 __attribute_const__
 int*
 bionic___errno(void)
 {
    return __errno_location();
+}
+
+__attribute_const__
+int*
+bionic___get_h_errno(void)
+{
+   return &h_errno;
 }
 
 int
