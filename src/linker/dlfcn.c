@@ -89,6 +89,8 @@ enum {
     WRAPPER_DYNHOOK,
 };
 
+#define MIN(a,b) (((a)<(b))?(a):(b))
+
 void *bionic_dlsym(void *handle, const char *symbol)
 {
     soinfo *found;
@@ -106,21 +108,17 @@ void *bionic_dlsym(void *handle, const char *symbol)
         goto err;
     }
 
-#if 0
-    void *sym_addr;
-    if(0 != (sym_addr = apkenv_get_hooked_symbol_dlfcn(handle, symbol)))
     {
-        LINKER_DEBUG_PRINTF("symbol %s hooked to %x\n",symbol,sym_addr);
-        pthread_mutex_unlock(&apkenv_dl_lock);
-        return sym_addr;
+        char wrap_sym_name[1024] = { 'b', 'i', 'o', 'n', 'i', 'c', '_' };
+        memcpy(wrap_sym_name + 7, symbol, MIN(sizeof(wrap_sym_name) - 7, strlen(symbol)));
+        if ((sym = dlsym(RTLD_DEFAULT, wrap_sym_name))) {
+            pthread_mutex_unlock(&apkenv_dl_lock);
+            return wrapper_create(symbol, sym);
+        } else if ((sym = dlsym(RTLD_DEFAULT, symbol))) {
+            pthread_mutex_unlock(&apkenv_dl_lock);
+            return wrapper_create(symbol, sym);
+        }
     }
-
-    if (is_builtin_lib_handle(handle)) {
-        /* must be hooked.. */
-        set_dlerror(DL_ERR_SYMBOL_NOT_FOUND);
-        goto err;
-    }
-#endif
 
     if(handle == RTLD_DEFAULT) {
         sym = apkenv_lookup(symbol, &found, NULL);
