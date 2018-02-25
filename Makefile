@@ -12,7 +12,7 @@ override CFLAGS += -std=c11 $(WARNINGS)
 override CPPFLAGS += -Isrc -DANDROID_X86_LINKER -DVERBOSE_FUNCTIONS
 
 bins = app
-all: $(bins) runtime/libc.so runtime/libandroid.so runtime/liblog.so
+all: $(bins)
 
 %.a:
 	$(LINK.c) -c $(filter %.c,$^) -o $@
@@ -51,11 +51,12 @@ jvm.a: wrapper.a src/jvm/jvm.c
 runtime/libjvm-java.so: private CPPFLAGS += -D_GNU_SOURCE
 runtime/libjvm-java.so: runtime verbose src/libjvm-java.c
 runtime/libjvm-android.so: runtime verbose src/libjvm-android.c
+runtime/libjvm-unity.so: runtime verbose src/libjvm-unity.c
 runtime/libjvm-jnibridge.so: runtime src/libjvm-jnibridge.c
-java: runtime/libjvm-java.so runtime/libjvm-android.so runtime/libjvm-jnibridge.so
+java: runtime/libjvm-java.so runtime/libjvm-android.so runtime/libjvm-unity.so runtime/libjvm-jnibridge.so
 
 app: private LDLIBS += -ldl -Wl,-rpath,runtime runtime/libdl.so runtime/libpthread.so
-app: private LDLIBS += runtime/libjvm-java.so runtime/libjvm-android.so runtime/libjvm-jnibridge.so
+app: private LDLIBS += runtime/libjvm-java.so runtime/libjvm-android.so runtime/libjvm-unity.so runtime/libjvm-jnibridge.so
 app: wrapper.a src/app.c native jvm.a java
 
 install-bin: $(bins)
