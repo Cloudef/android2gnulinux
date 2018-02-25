@@ -5,6 +5,25 @@
 #include "wrapper/verbose.h"
 
 jstring
+android_os_Build_MANUFACTURER(JNIEnv *env, jobject object)
+{
+   assert(env && object);
+   return (*env)->NewStringUTF(env, "android2gnulinux");
+}
+
+jstring
+android_os_Build_MODEL(JNIEnv *env, jobject object)
+{
+   return android_os_Build_MANUFACTURER(env, object);
+}
+
+jstring
+android_os_Build_PRODUCT(JNIEnv *env, jobject object)
+{
+   return android_os_Build_MANUFACTURER(env, object);
+}
+
+jstring
 android_content_Context_getPackageName(JNIEnv *env, jobject object, va_list args)
 {
    assert(env && object);
@@ -16,6 +35,56 @@ android_content_Context_getPackageCodePath(JNIEnv *env, jobject object, va_list 
 {
    assert(env && object);
    return (*env)->NewStringUTF(env, ".");
+}
+
+jstring
+android_content_Context_POWER_SERVICE(JNIEnv *env, jobject object)
+{
+   assert(env && object);
+   return (*env)->NewStringUTF(env, "power");
+}
+
+jstring
+android_content_Context_WINDOW_SERVICE(JNIEnv *env, jobject object)
+{
+   assert(env && object);
+   return (*env)->NewStringUTF(env, "window");
+}
+
+jobject
+android_content_Context_getSystemService(JNIEnv *env, jobject object, va_list args)
+{
+   assert(env && object);
+   jstring str = va_arg(args, jstring);
+   (*env)->GetStringUTFChars(env, str, NULL);
+   return NULL;
+}
+
+jint
+android_content_Context_checkCallingOrSelfPermission(JNIEnv *env, jobject object, va_list args)
+{
+   assert(env && object);
+   jstring str = va_arg(args, jstring);
+   (*env)->GetStringUTFChars(env, str, NULL);
+   return -1; // PERMISSION_DENIED
+}
+
+jobject
+android_content_Context_getPackageManager(JNIEnv *env, jobject object, va_list args)
+{
+   assert(env && object);
+   static jobject sv;
+   return (sv ? sv : (sv = (*env)->AllocObject(env, (*env)->FindClass(env, "android/content/pm/PackageManager"))));
+}
+
+jobject
+android_content_pm_PackageManager_getApplicationInfo(JNIEnv *env, jobject object, va_list args)
+{
+   assert(env && object);
+   jstring str = va_arg(args, jstring);
+   verbose("%s::%d", (*env)->GetStringUTFChars(env, str, NULL), va_arg(args, jint));
+   static jobject sv;
+   return (sv ? sv : (sv = (*env)->AllocObject(env, (*env)->FindClass(env, "android/content/pm/ApplicationInfo"))));
 }
 
 jobject
@@ -105,4 +174,20 @@ android_app_ApplicationErrorReport_getErrorReportReceiver(JNIEnv *env, jobject o
    va_end(args);
    static jobject sv;
    return (sv ? sv : (sv = (*env)->AllocObject(env, (*env)->FindClass(env, "android/content/ComponentName"))));
+}
+
+jstring
+android_app_Activity_getPackageName(JNIEnv *env, jobject object, va_list args)
+{
+   // FIXME: Maybe we should be able to handle java inheritance somehow
+   //        so we don't have to create these wrapper functions.
+   return android_content_Context_getPackageName(env, object, args);
+}
+
+jstring
+android_net_Uri_encode(JNIEnv *env, jobject object, va_list args)
+{
+   assert(env && object);
+   jstring str = va_arg(args, jstring);
+   return str;
 }
