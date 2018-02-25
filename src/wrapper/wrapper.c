@@ -36,6 +36,8 @@ static union {
 static void
 trace(const char *const symbol)
 {
+    assert(symbol);
+
     if (__cxa_demangle.ptr) {
         // >If output_buffer is not long enough, it is expanded using realloc
         // Holy fuck gcc what the fuck? Guess we don't use stack then, thanks
@@ -57,6 +59,7 @@ trace(const char *const symbol)
 void*
 wrapper_create(const char *const symbol, void *function)
 {
+    assert(symbol && function);
 #ifdef WRAPPER_TRACE
     if (!__cxa_demangle.ptr)
         __cxa_demangle.ptr = dlsym(RTLD_DEFAULT, "__cxa_demangle");
