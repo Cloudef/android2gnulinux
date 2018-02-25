@@ -508,7 +508,7 @@ ANativeWindow_setBuffersGeometry(struct ANativeWindow *window, int32_t width, in
 int32_t
 ANativeWindow_lock(struct ANativeWindow *window, struct ANativeWindow_Buffer *outBuffer, struct ARect *inOutDirtyBounds)
 {
-   assert(window && outBuffer && inOutDirtyBounds);
+   assert(window);
    return 0;
 }
 
