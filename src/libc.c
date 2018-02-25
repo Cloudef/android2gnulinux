@@ -322,5 +322,6 @@ bionic_sysconf_to_glibc_sysconf(int name)
 long
 bionic_sysconf(int name)
 {
+   verbose("0x%x", name);
    return sysconf(bionic_sysconf_to_glibc_sysconf(name));
 }
