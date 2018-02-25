@@ -3,8 +3,38 @@
 #include <unistd.h>
 #include <memory.h>
 #include <pthread.h>
+#include <semaphore.h>
 #include <assert.h>
 #include <sys/mman.h>
+
+typedef struct {
+   union {
+      struct {
+         unsigned int count;
+#ifdef __LP64__
+         int __reserved[3];
+#endif
+      } bionic;
+      void *glibc;
+   };
+} bionic_sem_t;
+
+typedef struct {
+   union {
+      struct {
+         uint32_t flags;
+         void* stack_base;
+         size_t stack_size;
+         size_t guard_size;
+         int32_t sched_policy;
+         int32_t sched_priority;
+#ifdef __LP64__
+         char __reserved[16];
+#endif
+      } bionic;
+      void *glibc;
+   };
+} bionic_attr_t;
 
 typedef struct {
    union {
@@ -54,8 +84,8 @@ typedef struct {
 typedef int bionic_key_t;
 _Static_assert(sizeof(bionic_key_t) == sizeof(pthread_key_t), "bionic_key_t and pthread_key_t size mismatch");
 
-typedef int bionic_pthread_once_t;
-_Static_assert(sizeof(bionic_pthread_once_t) == sizeof(pthread_once_t), "bionic_pthread_once_t and pthread_once_t size mismatch");
+typedef int bionic_once_t;
+_Static_assert(sizeof(bionic_once_t) == sizeof(pthread_once_t), "bionic_once_t and pthread_once_t size mismatch");
 
 typedef long bionic_pthread_t;
 _Static_assert(sizeof(bionic_pthread_t) == sizeof(pthread_t), "bionic_pthread_t and pthread_t size mismatch");
@@ -93,6 +123,105 @@ int
 bionic_pthread_cond_timedwait_monotonic_np(bionic_cond_t *cond, bionic_mutex_t *mutex, const struct timespec *abstime)
 {
    return 0;
+}
+
+int
+bionic_sem_destroy(bionic_sem_t *sem)
+{
+   assert(sem);
+   int ret = 0;
+   if (IS_MAPPED(sem)) {
+      ret = pthread_cond_destroy(sem->glibc);
+      munmap(sem->glibc, sizeof(sem_t));
+   }
+   return ret;
+}
+
+int
+bionic_sem_init(bionic_sem_t *sem, int pshared, unsigned int value)
+{
+   assert(sem);
+   if (!IS_MAPPED(sem))
+      sem->glibc = mmap(NULL, sizeof(sem_t), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+   return sem_init(sem->glibc, pshared, value);
+}
+
+int
+bionic_sem_post(bionic_sem_t *sem)
+{
+   assert(sem && IS_MAPPED(sem));
+   return sem_post(sem->glibc);
+}
+
+int
+bionic_sem_wait(bionic_sem_t *sem)
+{
+   assert(sem && IS_MAPPED(sem));
+   return sem_wait(sem->glibc);
+}
+
+int
+bionic_sem_trywait(bionic_sem_t *sem)
+{
+   assert(sem && IS_MAPPED(sem));
+   return sem_trywait(sem->glibc);
+}
+
+int
+bionic_sem_timedwait(bionic_sem_t *sem, const struct timespec *abs_timeout)
+{
+   assert(sem && IS_MAPPED(sem) && abs_timeout);
+   return sem_timedwait(sem->glibc, abs_timeout);
+}
+
+int
+bionic_pthread_attr_destroy(bionic_attr_t *attr)
+{
+   assert(attr);
+   int ret = 0;
+   if (IS_MAPPED(attr)) {
+      ret = pthread_attr_destroy(attr->glibc);
+      munmap(attr->glibc, sizeof(pthread_attr_t));
+   }
+   return ret;
+}
+
+int
+bionic_pthread_attr_init(bionic_attr_t *attr)
+{
+   assert(attr);
+   if (!IS_MAPPED(attr))
+      attr->glibc = mmap(NULL, sizeof(pthread_attr_t), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+   return pthread_attr_init(attr->glibc);
+}
+
+int
+bionic_pthread_getattr_np(bionic_pthread_t thread, bionic_attr_t *attr)
+{
+   assert(thread && attr && !IS_MAPPED(attr));
+   attr->glibc = mmap(NULL, sizeof(pthread_attr_t), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+   return pthread_getattr_np(thread, attr->glibc);
+}
+
+int
+bionic_pthread_attr_settstack(bionic_attr_t *attr, void *stackaddr, size_t stacksize)
+{
+   assert(attr && IS_MAPPED(attr));
+   return pthread_attr_setstack(attr->glibc, stackaddr, stacksize);
+}
+
+int
+bionic_pthread_attr_getstack(const bionic_attr_t *attr, void *stackaddr, size_t *stacksize)
+{
+   assert(attr && IS_MAPPED(attr));
+   return pthread_attr_getstack(attr->glibc, stackaddr, stacksize);
+}
+
+int
+bionic_pthread_create(bionic_pthread_t *thread, const bionic_attr_t *attr, void* (*start)(void*), void *arg)
+{
+   assert(thread && (!attr || IS_MAPPED(attr)));
+   return pthread_create(thread, (attr ? attr->glibc : NULL), start, arg);
 }
 
 int
@@ -170,6 +299,14 @@ bionic_pthread_mutex_lock(bionic_mutex_t *mutex)
 }
 
 int
+bionic_pthread_mutex_trylock(bionic_mutex_t *mutex)
+{
+   assert(mutex);
+   INIT_IF_NOT_MAPPED(mutex, default_pthread_mutex_init);
+   return pthread_mutex_trylock(mutex->glibc);
+}
+
+int
 bionic_pthread_mutex_unlock(bionic_mutex_t *mutex)
 {
    assert(mutex);
@@ -204,6 +341,14 @@ bionic_pthread_cond_init(bionic_cond_t *cond, const bionic_condattr_t *attr)
    if (!IS_MAPPED(cond))
       cond->glibc = mmap(NULL, sizeof(pthread_cond_t), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
    return pthread_cond_init(cond->glibc, (attr ? attr->glibc : NULL));
+}
+
+int
+bionic_pthread_cond_broadcast(bionic_cond_t *cond)
+{
+   assert(cond);
+   INIT_IF_NOT_MAPPED(cond, default_pthread_cond_init);
+   return pthread_cond_broadcast(cond->glibc);
 }
 
 int
