@@ -1501,7 +1501,11 @@ JNIEnv_GetStaticFieldID(JNIEnv* p0, jclass klass, const char* name, const char* 
 static jobject
 JNIEnv_GetStaticObjectField(JNIEnv* p0, jclass p1, jfieldID p2)
 {
-   return NULL;
+   assert(p0 && p1 && p2);
+   char symbol[255];
+   jvm_form_symbol(jnienv_get_jvm(p0), (jmethodID)p2, symbol, sizeof(symbol));
+   jobject (*fun)(JNIEnv*, jobject) = wrapper_create(symbol, dlsym(RTLD_DEFAULT, symbol));
+   return fun(p0, p1);
 }
 
 static jboolean
