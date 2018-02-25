@@ -325,3 +325,10 @@ bionic_sysconf(int name)
    verbose("0x%x", name);
    return sysconf(bionic_sysconf_to_glibc_sysconf(name));
 }
+
+void*
+bionic___dynamic_cast(const void *src_ptr, const void *src_type, const void *dst_type, intptr_t src2dst)
+{
+   // HACK: we should use android's various libstdc++ implementations instead.
+   return (void*)src_ptr;
+}
