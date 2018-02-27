@@ -1372,6 +1372,8 @@ static int apkenv_reloc_library(soinfo *si, Elf32_Rel *rel, unsigned count)
             if ((sym_addr = (intptr_t)dlsym(RTLD_DEFAULT, wrap_sym_name))) {
                LINKER_DEBUG_PRINTF("%s hooked symbol %s to %x\n", si->name, wrap_sym_name, sym_addr);
             } else if ((sym_addr = (intptr_t)dlsym(RTLD_DEFAULT, sym_name))) {
+               if (strstr(sym_name, "pthread_"))
+                  fprintf(stderr, "symbol may need to be wrapped: %s\n", sym_name);
                LINKER_DEBUG_PRINTF("%s hooked symbol %s to %x\n", si->name, sym_name, sym_addr);
             }
 #if 0

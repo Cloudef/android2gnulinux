@@ -22,6 +22,7 @@
 #include "linker_format.h"
 
 #include "wrapper/wrapper.h"
+#include "wrapper/verbose.h"
 #include "linker_debug.h"
 
 #ifdef APKENV_DEBUG
@@ -63,8 +64,8 @@ static void set_dlerror(int err)
 
 void *bionic_dlopen(const char *filename, int flag)
 {
+    verbose("%s (%d)", filename, flag);
     soinfo *ret;
-
     pthread_mutex_lock(&apkenv_dl_lock);
     ret = apkenv_find_library(filename);
 
@@ -93,16 +94,20 @@ enum {
 
 void *bionic_dlsym(void *handle, const char *symbol)
 {
+    verbose("%p, %s", handle, symbol);
+
     soinfo *found;
     Elf32_Sym *sym;
     unsigned bind;
 
     pthread_mutex_lock(&apkenv_dl_lock);
 
+#if 0
     if(unlikely(handle == 0)) {
         set_dlerror(DL_ERR_INVALID_LIBRARY_HANDLE);
         goto err;
     }
+#endif
     if(unlikely(symbol == 0)) {
         set_dlerror(DL_ERR_BAD_SYMBOL_NAME);
         goto err;
@@ -113,9 +118,11 @@ void *bionic_dlsym(void *handle, const char *symbol)
         memcpy(wrap_sym_name + 7, symbol, MIN(sizeof(wrap_sym_name) - 7, strlen(symbol)));
         if ((sym = dlsym(RTLD_DEFAULT, wrap_sym_name))) {
             pthread_mutex_unlock(&apkenv_dl_lock);
+            verbose("found bionic_ version");
             return wrapper_create(symbol, sym);
         } else if ((sym = dlsym(RTLD_DEFAULT, symbol))) {
             pthread_mutex_unlock(&apkenv_dl_lock);
+            verbose("found system version");
             return wrapper_create(symbol, sym);
         }
     }
