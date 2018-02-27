@@ -503,7 +503,7 @@ JNIEnv_CallObjectMethodV(JNIEnv *p0, jobject p1, jmethodID p2, va_list p3)
    char symbol[255];
    jvm_form_symbol(jnienv_get_jvm(p0), p2, symbol, sizeof(symbol));
    jobject (*fun)(JNIEnv*, jobject, va_list) = wrapper_create(symbol, dlsym(RTLD_DEFAULT, symbol));
-   return fun(p0, p1, p3);
+   return (fun ? fun(p0, p1, p3) : NULL);
 }
 
 static jobject
@@ -533,7 +533,7 @@ JNIEnv_CallBooleanMethodV(JNIEnv* p0, jobject p1, jmethodID p2, va_list p3)
    char symbol[255];
    jvm_form_symbol(jnienv_get_jvm(p0), p2, symbol, sizeof(symbol));
    jboolean (*fun)(JNIEnv*, jobject, va_list) = wrapper_create(symbol, dlsym(RTLD_DEFAULT, symbol));
-   return fun(p0, p1, p3);
+   return (fun ? fun(p0, p1, p3) : false);
 }
 
 static jboolean
@@ -653,7 +653,7 @@ JNIEnv_CallIntMethodV(JNIEnv* p0, jobject p1, jmethodID p2, va_list p3)
    char symbol[255];
    jvm_form_symbol(jnienv_get_jvm(p0), p2, symbol, sizeof(symbol));
    jint (*fun)(JNIEnv*, jobject, va_list) = wrapper_create(symbol, dlsym(RTLD_DEFAULT, symbol));
-   return fun(p0, p1, p3);
+   return (fun ? fun(p0, p1, p3) : 0);
 }
 
 static jint
@@ -771,8 +771,9 @@ JNIEnv_CallVoidMethodV(JNIEnv* p0, jobject p1, jmethodID p2, va_list p3)
    assert(p0 && p1 && p2);
    char symbol[255];
    jvm_form_symbol(jnienv_get_jvm(p0), p2, symbol, sizeof(symbol));
-   void (*fun)(JNIEnv*, jobject, va_list) = wrapper_create(symbol, dlsym(RTLD_DEFAULT, symbol));
-   fun(p0, p1, p3);
+   void (*fun)(JNIEnv*, jobject, va_list);
+   if ((fun = wrapper_create(symbol, dlsym(RTLD_DEFAULT, symbol))))
+      fun(p0, p1, p3);
 }
 
 static void
@@ -1211,7 +1212,7 @@ JNIEnv_CallStaticObjectMethodV(JNIEnv* p0, jclass p1, jmethodID p2, va_list p3)
    char symbol[255];
    jvm_form_symbol(jnienv_get_jvm(p0), p2, symbol, sizeof(symbol));
    jobject (*fun)(JNIEnv*, jobject, va_list) = wrapper_create(symbol, dlsym(RTLD_DEFAULT, symbol));
-   return fun(p0, p1, p3);
+   return (fun ? fun(p0, p1, p3) : NULL);
 }
 
 static jobject
@@ -1479,8 +1480,9 @@ JNIEnv_CallStaticVoidMethodV(JNIEnv* p0, jclass p1, jmethodID p2, va_list p3)
    assert(p0 && p1 && p2);
    char symbol[255];
    jvm_form_symbol(jnienv_get_jvm(p0), p2, symbol, sizeof(symbol));
-   void (*fun)(JNIEnv*, jobject, va_list) = wrapper_create(symbol, dlsym(RTLD_DEFAULT, symbol));
-   fun(p0, p1, p3);
+   void (*fun)(JNIEnv*, jobject, va_list);
+   if ((fun = wrapper_create(symbol, dlsym(RTLD_DEFAULT, symbol))))
+      fun(p0, p1, p3);
 }
 
 static void
@@ -1505,7 +1507,7 @@ JNIEnv_GetStaticObjectField(JNIEnv* p0, jclass p1, jfieldID p2)
    char symbol[255];
    jvm_form_symbol(jnienv_get_jvm(p0), (jmethodID)p2, symbol, sizeof(symbol));
    jobject (*fun)(JNIEnv*, jobject) = wrapper_create(symbol, dlsym(RTLD_DEFAULT, symbol));
-   return fun(p0, p1);
+   return (fun ? fun(p0, p1) : NULL);
 }
 
 static jboolean

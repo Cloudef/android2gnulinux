@@ -59,7 +59,8 @@ trace(const char *const symbol)
 void*
 wrapper_create(const char *const symbol, void *function)
 {
-    assert(symbol && function);
+    assert(symbol);
+
 #ifdef WRAPPER_TRACE
     if (!__cxa_demangle.ptr)
         __cxa_demangle.ptr = dlsym(RTLD_DEFAULT, "__cxa_demangle");
