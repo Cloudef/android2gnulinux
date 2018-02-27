@@ -4,7 +4,12 @@
 #include <stdarg.h>
 #include <pthread.h>
 
+#ifdef VERBOSE_FUNCTIONS
+// Don't inline to get warnings from files that don't log at all
 static void
+#else
+static inline void
+#endif
 verbose_log(const char *fmt, ...)
 {
    static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
