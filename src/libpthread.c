@@ -106,22 +106,26 @@ is_mapped(void *mem, const size_t sz)
 void
 bionic___pthread_cleanup_push(void *c, void *routine, void *arg)
 {
+   assert(0 && "implement");
 }
 
 void
 bionic___pthread_cleanup_pop(void *c, int execute)
 {
+   assert(0 && "implement");
 }
 
 int
 bionic_pthread_cond_timedwait_relative_np(bionic_cond_t *cond, bionic_mutex_t *mutex, const struct timespec *reltime)
 {
+   assert(0 && "implement");
    return 0;
 }
 
 int
 bionic_pthread_cond_timedwait_monotonic_np(bionic_cond_t *cond, bionic_mutex_t *mutex, const struct timespec *abstime)
 {
+   assert(0 && "implement");
    return 0;
 }
 
@@ -200,7 +204,7 @@ bionic_pthread_getattr_np(bionic_pthread_t thread, bionic_attr_t *attr)
 {
    assert(thread && attr && !IS_MAPPED(attr));
    attr->glibc = mmap(NULL, sizeof(pthread_attr_t), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
-   return pthread_getattr_np(thread, attr->glibc);
+   return pthread_getattr_np((pthread_t*)thread, attr->glibc);
 }
 
 int
@@ -218,10 +222,66 @@ bionic_pthread_attr_getstack(const bionic_attr_t *attr, void *stackaddr, size_t 
 }
 
 int
+bionic_pthread_attr_setstacksize(bionic_attr_t *attr, size_t stacksize)
+{
+   assert(attr && IS_MAPPED(attr));
+   return pthread_attr_setstacksize(attr->glibc, stacksize);
+}
+
+int
+bionic_pthread_attr_getstacksize(const bionic_attr_t *attr, size_t *stacksize)
+{
+   assert(attr && IS_MAPPED(attr));
+   return pthread_attr_getstacksize(attr->glibc, stacksize);
+}
+
+int
+bionic_pthread_attr_setschedpolicy(bionic_attr_t *attr, int policy)
+{
+   assert(attr && IS_MAPPED(attr));
+   return pthread_attr_setschedpolicy(attr->glibc, policy);
+}
+
+int
+bionic_pthread_attr_getschedpolicy(bionic_attr_t *attr, int *policy)
+{
+   assert(attr && IS_MAPPED(attr));
+   return pthread_attr_getschedpolicy(attr->glibc, policy);
+}
+
+int
+bionic_pthread_attr_setschedparam(bionic_attr_t *attr, const struct sched_param *param)
+{
+   assert(attr && IS_MAPPED(attr));
+   return pthread_attr_setschedparam(attr->glibc, param);
+}
+
+int
+bionic_pthread_attr_getschedparam(bionic_attr_t *attr, struct sched_param *param)
+{
+   assert(attr && IS_MAPPED(attr));
+   return pthread_attr_getschedparam(attr->glibc, param);
+}
+
+int
+bionic_pthread_attr_setdetachstate(bionic_attr_t *attr, int detachstate)
+{
+   assert(attr && IS_MAPPED(attr));
+   return pthread_attr_setdetachstate(attr->glibc, detachstate);
+}
+
+int
+bionic_pthread_attr_getdetachstate(bionic_attr_t *attr, int *detachstate)
+{
+   assert(attr && IS_MAPPED(attr));
+   return pthread_attr_getdetachstate(attr->glibc, detachstate);
+}
+
+int
 bionic_pthread_create(bionic_pthread_t *thread, const bionic_attr_t *attr, void* (*start)(void*), void *arg)
 {
    assert(thread && (!attr || IS_MAPPED(attr)));
-   return pthread_create(thread, (attr ? attr->glibc : NULL), start, arg);
+   return pthread_create((pthread_t*)thread, (attr ? attr->glibc : NULL), start, arg);
 }
 
 int
@@ -366,4 +426,13 @@ bionic_pthread_cond_wait(bionic_cond_t *cond, bionic_mutex_t *mutex)
    INIT_IF_NOT_MAPPED(cond, default_pthread_cond_init);
    INIT_IF_NOT_MAPPED(mutex, default_pthread_mutex_init);
    return pthread_cond_wait(cond->glibc, mutex->glibc);
+}
+
+int
+bionic_pthread_cond_timedwait(bionic_cond_t *cond, bionic_mutex_t *mutex, const struct timespec *abs_timeout)
+{
+   assert(cond && mutex);
+   INIT_IF_NOT_MAPPED(cond, default_pthread_cond_init);
+   INIT_IF_NOT_MAPPED(mutex, default_pthread_mutex_init);
+   return pthread_cond_timedwait(cond->glibc, mutex->glibc, abs_timeout);
 }
