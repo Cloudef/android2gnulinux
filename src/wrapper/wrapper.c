@@ -61,6 +61,11 @@ wrapper_create(const char *const symbol, void *function)
 {
     assert(symbol);
 
+    if (!function) {
+        verbose_log("FIXME: unimplemented symbol: %s", symbol);
+        return NULL;
+    }
+
 #ifdef WRAPPER_TRACE
     if (!__cxa_demangle.ptr)
         __cxa_demangle.ptr = dlsym(RTLD_DEFAULT, "__cxa_demangle");

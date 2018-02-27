@@ -1,11 +1,11 @@
 #pragma once
 
-#ifdef VERBOSE_FUNCTIONS
-#  include <stdio.h>
-#  include <stdarg.h>
-#  include <pthread.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <pthread.h>
+
 static void
-verbose(const char *fmt, ...)
+verbose_log(const char *fmt, ...)
 {
    static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
    pthread_mutex_lock(&mutex);
@@ -17,6 +17,9 @@ verbose(const char *fmt, ...)
    fputc('\n', stderr);
    pthread_mutex_unlock(&mutex);
 }
+
+#ifdef VERBOSE_FUNCTIONS
+#  define verbose verbose_log
 #else
 #  define verbose(...)
 #endif
