@@ -43,7 +43,10 @@ runtime/libpthread.so: runtime src/libpthread.c
 runtime/libandroid.so: private LDLIBS += `pkg-config --libs glfw3`
 runtime/libandroid.so: runtime src/libandroid.c
 runtime/liblog.so: runtime src/liblog.c
-native: runtime/libdl.so runtime/libc.so runtime/libpthread.so runtime/libandroid.so runtime/liblog.so
+runtime/libEGL.so: private CPPFLAGS += -D_GNU_SOURCE
+runtime/libEGL.so: private LDLIBS += -lEGL
+runtime/libEGL.so: runtime src/libEGL.c
+native: runtime/libdl.so runtime/libc.so runtime/libpthread.so runtime/libandroid.so runtime/liblog.so runtime/libEGL.so
 
 jvm.a: private CPPFLAGS += -D_GNU_SOURCE
 jvm.a: private CFLAGS += -Wno-unused-variable -Wno-pedantic
