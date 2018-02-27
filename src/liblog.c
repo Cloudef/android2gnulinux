@@ -4,8 +4,10 @@
 int
 __android_log_vprint(int prio, const char *tag,  const char *fmt, va_list ap)
 {
-   printf("(%d) %s :: ", prio, tag);
-   return vprintf(fmt, ap);
+   int ret = printf("(%d) %s :: ", prio, tag);
+   ret += vprintf(fmt, ap);
+   ret += (puts("") != EOF);
+   return ret;
 }
 
 int
