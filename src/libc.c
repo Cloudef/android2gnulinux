@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <signal.h>
 #include <math.h>
 #include <dirent.h>
 #include <assert.h>
@@ -25,9 +26,19 @@ struct bionic_dirent {
    char d_name[256];
 };
 
+#ifdef ANDROID_X86_LINKER
 struct bionic_sigaction {
-   char nop;
+   union {
+      __sighandler_t _sa_handler;
+      void(* _sa_sigaction) (int, siginfo_t *, void *);
+   } _u;
+   sigset_t sa_mask;
+   unsigned long sa_flags;
+   void(* sa_restorer) (void);
 };
+#else
+#  error "not implemented for this platform"
+#endif
 
 // Stuff that doesn't exist in glibc
 
@@ -155,8 +166,25 @@ bionic_readdir_r(DIR *dirp, struct bionic_dirent *entry, struct bionic_dirent **
 int
 bionic_sigaction(int sig, const struct bionic_sigaction *restrict act, struct bionic_sigaction *restrict oact)
 {
-   // FIXME: implement
-   return 0;
+   assert(act);
+
+   struct sigaction goact, gact = {
+      .sa_handler = act->_u._sa_handler,
+      .sa_mask = act->sa_mask,
+      .sa_flags = act->sa_flags,
+      .sa_restorer = act->sa_restorer,
+   };
+
+   const int ret = sigaction(sig, &gact, &goact);
+
+   if (oact) {
+      oact->_u._sa_handler = goact.sa_handler;
+      oact->sa_mask = goact.sa_mask;
+      oact->sa_flags = goact.sa_flags;
+      oact->sa_restorer = goact.sa_restorer;
+   }
+
+   return ret;
 }
 
 int
