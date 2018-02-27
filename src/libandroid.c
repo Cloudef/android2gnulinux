@@ -431,12 +431,35 @@ struct ANativeWindow {
    GLFWwindow *glfw;
 };
 
+enum {
+   WINDOW_FORMAT_RGBA_8888          = 1,
+   WINDOW_FORMAT_RGBX_8888          = 2,
+   WINDOW_FORMAT_RGB_565            = 4,
+};
+
 struct ANativeWindow_Buffer {
-   char nop;
+   // The number of pixels that are show horizontally.
+   int32_t width;
+
+   // The number of pixels that are shown vertically.
+   int32_t height;
+
+   // The number of *pixels* that a line in the buffer takes in
+   // memory.  This may be >= width.
+   int32_t stride;
+
+   // The format of the buffer.  One of WINDOW_FORMAT_*
+   int32_t format;
+
+   // The actual bits.
+   void* bits;
+
+   // Do not touch.
+   uint32_t reserved[6];
 };
 
 struct ARect {
-   char nop;
+   int32_t left, top, right, bottom;
 };
 
 static void
@@ -450,20 +473,17 @@ ANativeWindow_fromSurface(JNIEnv* env, jobject surface)
 {
    assert(env && surface);
 
-   struct ANativeWindow *win;
-   if (!(win = calloc(1, sizeof(*win))))
+   struct ANativeWindow *window;
+   if (!(window = calloc(1, sizeof(*window))))
       return NULL;
 
    glfwInit();
    fprintf(stderr, "glfw: %s\n", glfwGetVersionString());
    glfwSetErrorCallback(glfw_error_cb);
-   glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
-   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-   win->glfw = glfwCreateWindow(1024, 768, "ANativeWindow", NULL, NULL);
-   assert(win->glfw);
-   glfwMakeContextCurrent(win->glfw);
-   return win;
+   window->glfw = glfwCreateWindow(1024, 768, "ANativeWindow", NULL, NULL);
+   assert(window->glfw);
+   // glfwMakeContextCurrent(window->glfw);
+   return window;
 }
 
 void
@@ -509,6 +529,7 @@ int32_t
 ANativeWindow_lock(struct ANativeWindow *window, struct ANativeWindow_Buffer *outBuffer, struct ARect *inOutDirtyBounds)
 {
    assert(window);
+   *outBuffer = (struct ANativeWindow_Buffer){0};
    return 0;
 }
 
