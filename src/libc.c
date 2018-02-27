@@ -354,9 +354,27 @@ bionic_sysconf(int name)
    return sysconf(bionic_sysconf_to_glibc_sysconf(name));
 }
 
+#if 1
+// gcc's libstdc++
 void*
 bionic___dynamic_cast(const void *src_ptr, const void *src_type, const void *dst_type, intptr_t src2dst)
 {
-   // HACK: we should use android's various libstdc++ implementations instead.
    return (void*)src_ptr;
 }
+#else
+// android's libstdc++
+#  include <sys/time.h>
+#  include <linux/futex.h>
+
+int
+bionic___futex_wait(volatile void* ftx, int value, const struct timespec* timeout)
+{
+   return syscall(SYS_futex, ftx, FUTEX_WAIT, value, timeout, 0);
+}
+
+int
+bionic___futex_wake(volatile void* ftx, int count)
+{
+   return syscall(SYS_futex, ftx, FUTEX_WAKE, count, NULL, 0);
+}
+#endif
