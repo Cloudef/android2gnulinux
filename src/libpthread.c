@@ -214,7 +214,7 @@ bionic_pthread_getattr_np(bionic_pthread_t thread, bionic_attr_t *attr)
    assert(thread && attr);
    *attr = (bionic_attr_t){0};
    attr->glibc = mmap(NULL, sizeof(pthread_attr_t), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
-   return pthread_getattr_np((pthread_t*)thread, attr->glibc);
+   return pthread_getattr_np((pthread_t)thread, attr->glibc);
 }
 
 int
