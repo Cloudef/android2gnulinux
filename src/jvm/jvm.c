@@ -1953,7 +1953,7 @@ jvm_register_native_method(struct jvm *jvm, const jclass klass, const JNINativeM
    jvm_string_set_cstr(&jvm->methods[i].method.name, method->name, true);
    jvm_string_set_cstr(&jvm->methods[i].method.signature, method->signature, true);
    jvm->methods[i].function = method->fnPtr;
-   verbose("%s::%s::%s", jvm_get_object(jvm, klass)->klass.name.data, method->name, method->signature);
+   verbose_log("%s::%s::%s", jvm_get_object(jvm, klass)->klass.name.data, method->name, method->signature);
 }
 
 static jint
