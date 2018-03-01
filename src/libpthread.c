@@ -15,7 +15,7 @@ typedef struct {
          int __reserved[3];
 #endif
       } bionic;
-      void *glibc;
+      sem_t *glibc;
    };
 } bionic_sem_t;
 
@@ -32,7 +32,7 @@ typedef struct {
          char __reserved[16];
 #endif
       } bionic;
-      void *glibc;
+      pthread_attr_t *glibc;
    };
 } bionic_attr_t;
 
@@ -43,14 +43,14 @@ typedef struct {
 #else
       int32_t __private[1];
 #endif
-      void *glibc;
+      pthread_mutex_t *glibc;
    };
 } bionic_mutex_t;
 
 typedef struct {
    union {
       long __private;
-      void *glibc;
+      pthread_mutexattr_t *glibc;
    };
 } bionic_mutexattr_t;
 
@@ -70,14 +70,14 @@ typedef struct {
 #else
       int32_t __private[1];
 #endif
-      void *glibc;
+      pthread_cond_t *glibc;
    };
 } bionic_cond_t;
 
 typedef struct {
    union {
       long __private;
-      void *glibc;
+      pthread_condattr_t *glibc;
    };
 } bionic_condattr_t;
 
@@ -140,7 +140,7 @@ bionic_sem_destroy(bionic_sem_t *sem)
    assert(sem);
    int ret = 0;
    if (IS_MAPPED(sem)) {
-      ret = pthread_cond_destroy(sem->glibc);
+      ret = sem_destroy(sem->glibc);
       munmap(sem->glibc, sizeof(sem_t));
    }
    return ret;
