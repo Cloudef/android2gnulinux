@@ -11,16 +11,16 @@ struct ANativeWindow {
 EGLDisplay
 eglGetDisplay(EGLNativeDisplayType native_display)
 {
-   static EGLDisplay (*orig_eglGetDisplay)(EGLNativeDisplayType native_display);
-   if (!orig_eglGetDisplay) orig_eglGetDisplay = dlsym(RTLD_NEXT, "eglGetDisplay");
-   return orig_eglGetDisplay(glfwGetX11Display());
+   static union { EGLDisplay (*fun)(EGLNativeDisplayType); void *ptr; } orig;
+   if (!orig.ptr) orig.ptr = dlsym(RTLD_NEXT, "eglGetDisplay");
+   return orig.fun(glfwGetX11Display());
 }
 
 EGLSurface
 eglCreateWindowSurface(EGLDisplay display, EGLConfig config, NativeWindowType native_window, EGLint const *attrib_list)
 {
-   static EGLSurface (*orig_eglCreateWindowSurface)(EGLDisplay display, EGLConfig config, NativeWindowType native_window, EGLint const *attrib_list);
-   if (!orig_eglCreateWindowSurface) orig_eglCreateWindowSurface = dlsym(RTLD_NEXT, "eglCreateWindowSurface");
+   static union { EGLSurface (*fun)(EGLDisplay, EGLConfig, NativeWindowType, EGLint const*); void *ptr; } orig;
+   if (!orig.ptr) orig.ptr = dlsym(RTLD_NEXT, "eglCreateWindowSurface");
    struct ANativeWindow *win = (struct ANativeWindow*)native_window;
-   return orig_eglCreateWindowSurface(display, config, glfwGetX11Window(win->glfw), attrib_list);
+   return orig.fun(display, config, glfwGetX11Window(win->glfw), attrib_list);
 }
