@@ -480,9 +480,9 @@ ANativeWindow_fromSurface(JNIEnv* env, jobject surface)
    glfwInit();
    fprintf(stderr, "glfw: %s\n", glfwGetVersionString());
    glfwSetErrorCallback(glfw_error_cb);
+   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
    window->glfw = glfwCreateWindow(1024, 768, "ANativeWindow", NULL, NULL);
    assert(window->glfw);
-   // glfwMakeContextCurrent(window->glfw);
    return window;
 }
 
