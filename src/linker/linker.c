@@ -1121,7 +1121,7 @@ get_wr_offset(int fd, const char *name, Elf32_Ehdr *ehdr)
 #endif
 
 static soinfo *
-apkenv_load_library(const char *name)
+apkenv_load_library(const char *name, const bool try_glibc)
 {
     char fullpath[512];
     int fd = apkenv_open_library(name, fullpath);
@@ -1133,14 +1133,11 @@ apkenv_load_library(const char *name)
     Elf32_Ehdr *hdr;
 
     if(fd == -1) {
-        if (dlopen(name, RTLD_NOW | RTLD_GLOBAL)) {
+        if (try_glibc && dlopen(name, RTLD_NOW | RTLD_GLOBAL)) {
             DEBUG("Loaded %s with glibc dlopen\n", name);
             return NULL;
         }
-#if !LINKER_DEBUG
-        if (!is_lib_optional(name))
-#endif
-            DL_ERR("Library '%s' not found", name);
+        DL_ERR("Bionic library '%s' not found", name);
         return NULL;
     }
 
@@ -1245,7 +1242,7 @@ apkenv_init_library(soinfo *si)
     return si;
 }
 
-soinfo *apkenv_find_library(const char *name)
+soinfo *apkenv_find_library(const char *name, const bool try_glibc)
 {
     soinfo *si;
     const char *bname;
@@ -1274,7 +1271,7 @@ soinfo *apkenv_find_library(const char *name)
     }
 
     TRACE("[ %5d '%s' has not been loaded yet.  Locating...]\n", apkenv_pid, name);
-    si = apkenv_load_library(name);
+    si = apkenv_load_library(name, try_glibc);
     if(si == NULL)
         return NULL;
     return apkenv_init_library(si);
@@ -2055,7 +2052,7 @@ static int apkenv_link_image(soinfo *si, unsigned wr_offset)
         int i;
         memset(apkenv_preloads, 0, sizeof(apkenv_preloads));
         for(i = 0; apkenv_ldpreload_names[i] != NULL; i++) {
-            soinfo *lsi = apkenv_find_library(apkenv_ldpreload_names[i]);
+            soinfo *lsi = apkenv_find_library(apkenv_ldpreload_names[i], true);
             if(lsi == 0) {
                 apkenv_strlcpy(apkenv_tmp_err_buf, apkenv_linker_get_error(), sizeof(apkenv_tmp_err_buf));
                 DL_ERR("%5d could not load needed library '%s' for '%s' (%s)",
@@ -2072,7 +2069,7 @@ static int apkenv_link_image(soinfo *si, unsigned wr_offset)
             DEBUG("%5d %s needs %s\n", apkenv_pid, si->name, si->strtab + d[1]);
             soinfo *lsi = NULL;
             // if (get_builtin_lib_handle(si->strtab + d[1]) == NULL)
-            lsi = apkenv_find_library(si->strtab + d[1]);
+            lsi = apkenv_find_library(si->strtab + d[1], true);
             if(lsi == 0) {
                 /**
                  * XXX Dirty Hack Alarm --thp XXX

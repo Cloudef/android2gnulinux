@@ -33,6 +33,7 @@
 #include <sys/types.h>
 #include <elf.h>
 #include <link.h>
+#include <stdbool.h>
 
 #undef PAGE_MASK
 #undef PAGE_SIZE
@@ -204,7 +205,7 @@ extern soinfo apkenv_libdl_info;
 #define DT_PREINIT_ARRAYSZ 33
 #endif
 
-soinfo *apkenv_find_library(const char *name);
+soinfo *apkenv_find_library(const char *name, const bool try_glibc);
 unsigned apkenv_unload_library(soinfo *si);
 Elf32_Sym *apkenv_lookup_in_library(soinfo *si, const char *name);
 Elf32_Sym *apkenv_lookup(const char *name, soinfo **found, soinfo *start);

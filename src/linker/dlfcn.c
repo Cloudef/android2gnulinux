@@ -67,10 +67,11 @@ void *bionic_dlopen(const char *filename, int flag)
     verbose("%s (%d)", filename, flag);
     soinfo *ret;
     pthread_mutex_lock(&apkenv_dl_lock);
-    ret = apkenv_find_library(filename);
+    ret = apkenv_find_library(filename, false);
 
     if (unlikely(ret == NULL)) {
-        set_dlerror(DL_ERR_CANNOT_LOAD_LIBRARY);
+        if (!(ret = dlopen(filename, flag)))
+            set_dlerror(DL_ERR_CANNOT_LOAD_LIBRARY);
     } else {
         apkenv_call_constructors_recursive(ret);
         ret->refcount++;
@@ -102,12 +103,6 @@ void *bionic_dlsym(void *handle, const char *symbol)
 
     pthread_mutex_lock(&apkenv_dl_lock);
 
-#if 0
-    if(unlikely(handle == 0)) {
-        set_dlerror(DL_ERR_INVALID_LIBRARY_HANDLE);
-        goto err;
-    }
-#endif
     if(unlikely(symbol == 0)) {
         set_dlerror(DL_ERR_BAD_SYMBOL_NAME);
         goto err;
@@ -125,6 +120,11 @@ void *bionic_dlsym(void *handle, const char *symbol)
             verbose("found system version");
             return wrapper_create(symbol, sym);
         }
+    }
+
+    if(unlikely(handle == 0)) {
+        set_dlerror(DL_ERR_INVALID_LIBRARY_HANDLE);
+        goto err;
     }
 
     if(handle == RTLD_DEFAULT) {
