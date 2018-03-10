@@ -16,8 +16,9 @@ java_lang_System_load(JNIEnv *env, jobject object, va_list args)
    const char *lib = (*env)->GetStringUTFChars(env, va_arg(args, jstring), NULL);
    verbose("%s", lib);
 
-   void *handle = bionic_dlopen(lib, RTLD_NOW | RTLD_GLOBAL);
-   assert(handle);
+   void *handle;
+   if (!(handle = bionic_dlopen(lib, RTLD_NOW | RTLD_GLOBAL)))
+      return;
 
    union {
       void *ptr;
