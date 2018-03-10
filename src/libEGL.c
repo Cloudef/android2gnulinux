@@ -23,6 +23,6 @@ eglCreateWindowSurface(EGLDisplay display, EGLConfig config, NativeWindowType na
 {
    static union { EGLSurface (*fun)(EGLDisplay, EGLConfig, NativeWindowType, EGLint const*); void *ptr; } orig;
    if (!orig.ptr) orig.ptr = dlsym(RTLD_NEXT, "eglCreateWindowSurface");
-   struct ANativeWindow *win = (struct ANativeWindow*)native_window;
-   return orig.fun(display, config, glfwGetX11Window(win->glfw), attrib_list);
+   struct ANativeWindow *window = (struct ANativeWindow*)native_window;
+   return orig.fun(display, config, glfwGetX11Window(window->glfw), attrib_list);
 }
