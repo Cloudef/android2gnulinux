@@ -97,6 +97,18 @@ for all the functions that will be implemented. As for implementing stuff,
 people should only implement the stuff some application needs. Lets not
 implement anything that doesn't get used.
 
+## Debugging with apitrace
+
+Since apitrace and similiar OpenGL debuggers redirect the dlopen calls,
+you have to `LD_PRELOAD` the `runtime/libEGL.so` while running apitrace.
+`runtime/libEGL.so` is responsible for wrapping `eglGetDisplay` and
+`eglCreateWindowSurface` functions, so that valid native handles are
+passed to the real system EGL implementation.
+
+```
+LD_PRELOAD=runtime/libEGL.so apitrace -a egl ./app bioniclib.so
+```
+
 ## Q & A
 
 ### Why? I still don't get what this is for...
