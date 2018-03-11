@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <assert.h>
 
 #define GLFW_INCLUDE_NONE
@@ -428,6 +429,7 @@ AInputQueue_finishEvent(struct AInputQueue *queue, struct AInputEvent *event, in
 // ANative
 
 struct ANativeWindow {
+   char header[4];
    GLFWwindow *glfw;
 };
 
@@ -476,6 +478,8 @@ ANativeWindow_fromSurface(JNIEnv* env, jobject surface)
    struct ANativeWindow *window;
    if (!(window = calloc(1, sizeof(*window))))
       return NULL;
+
+   memcpy(window->header, "andr", sizeof(window->header));
 
    glfwInit();
    fprintf(stderr, "glfw: %s\n", glfwGetVersionString());
