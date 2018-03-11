@@ -450,7 +450,7 @@ static jboolean
 JNIEnv_IsInstanceOf(JNIEnv* p0, jobject p1, jclass p2)
 {
    assert(p0 && p1 && p2);
-   verbose("%u, %pu", (uint32_t)(uintptr_t)p1, (uint32_t)(uintptr_t)p2);
+   verbose("%u, %u", (uint32_t)(uintptr_t)p1, (uint32_t)(uintptr_t)p2);
    return jvm_get_object(jnienv_get_jvm(p0), p1)->this_klass == p2;
 }
 
