@@ -14,10 +14,6 @@
 #include <netdb.h> // h_errno
 #include  "wrapper/verbose.h"
 
-#ifdef VERBOSE_FUNCTIONS
-#  include "libc-verbose.h"
-#endif
-
 struct bionic_dirent {
    uint64_t d_ino;
    int64_t d_off;
@@ -74,9 +70,10 @@ tkill(int tid, int sig)
 // Stuff needed for runtime compatibility, but not neccessary for linking
 // Also stuff that exists in glibc, but needs to be wrapped for runtime compatibility
 
+#include "libc-stdio.h"
+
 const char *bionic__ctype_, *bionic__tolower_tab_, *bionic__toupper_tab_;
-char bionic___sF[0x54] = {0};
-unsigned int bionic___page_size = PAGE_SIZE;
+const unsigned int bionic___page_size = PAGE_SIZE;
 
 __attribute_const__
 int*
@@ -377,4 +374,8 @@ bionic___futex_wake(volatile void* ftx, int count)
 {
    return syscall(SYS_futex, ftx, FUTEX_WAKE, count, NULL, 0);
 }
+#endif
+
+#ifdef VERBOSE_FUNCTIONS
+#  include "libc-verbose.h"
 #endif

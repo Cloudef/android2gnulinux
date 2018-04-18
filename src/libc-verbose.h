@@ -144,26 +144,6 @@ bionic_unlink(const char *path)
    return unlink(path);
 }
 
-size_t
-bionic_fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
-{
-   char buf[256], fname[256] = {0};
-   snprintf(buf, sizeof(buf), "/proc/self/fd/%d", fileno(stream));
-   readlink(buf, fname, sizeof(fname));
-   verbose("%s (%d)\n%p, %zu, %zu, %p", fname, fileno(stream), ptr, size, nmemb, (void*)stream);
-   return fread(ptr, size, nmemb, stream);
-}
-
-size_t
-bionic_fwrite(void *ptr, size_t size, size_t nmemb, FILE *stream)
-{
-   char buf[256], fname[256] = {0};
-   snprintf(buf, sizeof(buf), "/proc/self/fd/%d", fileno(stream));
-   readlink(buf, fname, sizeof(fname));
-   verbose("%s (%d)\n%p, %zu, %zu, %p", fname, fileno(stream), ptr, size, nmemb, (void*)stream);
-   return fwrite(ptr, size, nmemb, stream);
-}
-
 char*
 bionic_getenv(const char *name)
 {
