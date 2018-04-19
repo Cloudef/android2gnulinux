@@ -21,14 +21,11 @@ const struct bionic___sFILE bionic___sF[3] = {
 static inline FILE*
 bionic_file_to_glibc_file(FILE *f)
 {
-   // Can't compare just memory addresses because GNU libstdc++ copies the FILE struct...
-   // Maybe there could be a cleaner solution, this may in practice break if standard streams
-   // are opened with different flags in C++.
-   if (memcmp(f, "stdin", sizeof("stdin")))
+   if (f == (void*)&bionic___sF[0])
       return stdin;
-   else if (memcmp(f, "stdout", sizeof("stdout")))
+   else if (f == (void*)&bionic___sF[1])
       return stdout;
-   else if (memcmp(f, "stderr", sizeof("stderr")))
+   else if (f == (void*)&bionic___sF[2])
       return stderr;
    return f;
 }
