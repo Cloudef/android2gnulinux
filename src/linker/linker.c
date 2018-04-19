@@ -1384,9 +1384,10 @@ static int apkenv_reloc_library(soinfo *si, Elf32_Rel *rel, unsigned count)
             }
             if(sym_addr != 0)
             {
-                if(ELF32_ST_TYPE(((Elf32_Sym*)(intptr_t)sym_addr)->st_info) == STT_FUNC) {
+                Dl_info info;
+                ElfW(Sym) *extra;
+                if (dladdr1((void*)sym_addr, &info, (void**) &extra, RTLD_DL_SYMENT) && extra && ELF32_ST_TYPE(extra->st_info) == STT_FUNC)
                     sym_addr = (unsigned)wrapper_create(sym_name, (void*)sym_addr);
-                }
             } else
             if(s == NULL) {
                 /* We only allow an undefined symbol if this is a weak
