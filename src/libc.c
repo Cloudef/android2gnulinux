@@ -71,8 +71,8 @@ tkill(int tid, int sig)
 // Also stuff that exists in glibc, but needs to be wrapped for runtime compatibility
 
 #include "libc-stdio.h"
+#include "libc-ctype.h"
 
-const char *bionic__ctype_, *bionic__tolower_tab_, *bionic__toupper_tab_;
 const unsigned int bionic___page_size = PAGE_SIZE;
 
 __attribute_const__
