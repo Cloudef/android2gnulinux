@@ -75,7 +75,7 @@ bionic_snprintf(char *str, size_t size, const char *fmt, ...)
 size_t
 bionic_strlen(const char *str)
 {
-   verbose("%s", str);
+   verbose("%s (%zu)", str, strlen(str));
    return strlen(str);
 }
 
