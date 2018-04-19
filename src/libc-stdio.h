@@ -1,5 +1,7 @@
 #pragma once
 
+#include <wchar.h>
+
 struct bionic___sFILE {
 #if defined(__LP64__)
    char __private[152];
@@ -41,6 +43,37 @@ int
 bionic_fclose(FILE *stream)
 {
    return fclose(bionic_file_to_glibc_file(stream));
+}
+
+int
+bionic_fputc(int c, FILE *stream)
+{
+   return fputc(c, bionic_file_to_glibc_file(stream));
+}
+
+int
+bionic_putc(int c, FILE *stream)
+{
+   return putc(c, bionic_file_to_glibc_file(stream));
+}
+
+
+int
+bionic_fputs(const char *c, FILE *stream)
+{
+   return fputs(c, bionic_file_to_glibc_file(stream));
+}
+
+wint_t
+bionic_fputwc(wchar_t wc, FILE *stream)
+{
+   return fputwc(wc, bionic_file_to_glibc_file(stream));
+}
+
+wint_t
+bionic_putwc(wchar_t wc, FILE *stream)
+{
+   return putwc(wc, bionic_file_to_glibc_file(stream));
 }
 
 size_t
