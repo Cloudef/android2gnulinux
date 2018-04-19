@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#ifdef APKENV_DEBUG
+#if LINKER_DEBUG
 #  define LINKER_DEBUG_PRINTF(...) PRINT(__VA_ARGS__)
 #else
 #  define LINKER_DEBUG_PRINTF(...)
