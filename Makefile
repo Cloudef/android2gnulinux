@@ -35,7 +35,7 @@ runtime/libdl.so: private CFLAGS += -Wno-pedantic -Wno-variadic-macros -Wno-poin
 runtime/libdl.so: runtime wrapper.a src/linker/dlfcn.c src/linker/linker.c src/linker/linker_environ.c src/linker/rt.c src/linker/strlcpy.c
 runtime/libc.so: private CPPFLAGS += -D_GNU_SOURCE
 runtime/libc.so: private CFLAGS += -Wno-deprecated-declarations
-runtime/libc.so: private LDLIBS += `pkg-config --libs libbsd`
+runtime/libc.so: private LDLIBS += `pkg-config --libs libbsd libunwind`
 runtime/libc.so: runtime verbose src/libc.c
 runtime/libpthread.so: private CPPFLAGS += -D_GNU_SOURCE
 runtime/libpthread.so: private LDLIBS += -lpthread
