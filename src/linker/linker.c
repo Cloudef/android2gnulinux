@@ -1271,10 +1271,16 @@ soinfo *apkenv_find_library(const char *name, const bool try_glibc)
     }
 
     TRACE("[ %5d '%s' has not been loaded yet.  Locating...]\n", apkenv_pid, name);
-    si = apkenv_load_library(name, try_glibc);
-    if(si == NULL)
+    if (!(si = apkenv_load_library(name, try_glibc)) || !(si = apkenv_init_library(si)))
         return NULL;
-    return apkenv_init_library(si);
+
+    if (!strstr(bname, "libstdc++.so")) {
+        Elf32_Sym *sym = apkenv_lookup_in_library(si, "__cxa_demangle");
+        if (sym && ELF32_ST_BIND(sym->st_info) == STB_GLOBAL && sym->st_shndx != 0)
+            wrapper_set_cpp_demangler((void*)(intptr_t)(sym->st_value + si->base));
+    }
+
+    return si;
 }
 
 /* TODO:

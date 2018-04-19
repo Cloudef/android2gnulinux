@@ -2,11 +2,10 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dlfcn.h>
 #include <assert.h>
 #include <sys/mman.h>
 #include "verbose.h"
@@ -61,16 +60,32 @@ trace(const char *const symbol)
         char *demangled;
         static __thread char *data;
         static __thread size_t size;
+        static __thread bool skip_trace;
+
+        // Avoid infinite recursion and tracing calls made by __cxa_demangle.fun
+        if (skip_trace)
+            return;
+
+        skip_trace = true;
         if ((demangled = __cxa_demangle.fun(symbol, data, &size, &status))) {
             data = (data != demangled ? demangled : data);
             verbose("trace: %s", demangled);
             return;
         }
+        skip_trace = false;
     }
 
     verbose("trace: %s", symbol);
 }
 #endif
+
+void
+wrapper_set_cpp_demangler(void *function)
+{
+#ifdef WRAPPER_TRACE
+    __cxa_demangle.ptr = function;
+#endif
+}
 
 void*
 wrapper_create(const char *const symbol, void *function)
@@ -83,9 +98,6 @@ wrapper_create(const char *const symbol, void *function)
     }
 
 #ifdef WRAPPER_TRACE
-    if (!__cxa_demangle.ptr)
-        __cxa_demangle.ptr = dlsym(RTLD_DEFAULT, "__cxa_demangle");
-
     const size_t sz = &wrapper_end - &wrapper_start;
     unsigned char *fun = mmap(NULL, sz, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
     assert(fun != MAP_FAILED);
