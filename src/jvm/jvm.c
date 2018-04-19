@@ -451,6 +451,8 @@ JNIEnv_IsInstanceOf(JNIEnv* p0, jobject p1, jclass p2)
 {
    assert(p0 && p1 && p2);
    verbose("%u, %u", (uint32_t)(uintptr_t)p1, (uint32_t)(uintptr_t)p2);
+   verbose("%s", jvm_get_object(jnienv_get_jvm(p0), jvm_get_object(jnienv_get_jvm(p0), p1)->this_klass)->klass.name.data);
+   verbose("%s", jvm_get_object(jnienv_get_jvm(p0), p2)->klass.name.data);
    return jvm_get_object(jnienv_get_jvm(p0), p1)->this_klass == p2;
 }
 
