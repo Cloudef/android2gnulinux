@@ -75,7 +75,7 @@ extern int apkenv_format_log(int, const char *, const char *, ...);
 #else /* !LINKER_DEBUG_TO_LOG */
 #define _PRINTVF(v,f,x...)                           \
     do {                                             \
-        if (apkenv_debug_verbosity > (v)) printf(x);        \
+        if (apkenv_debug_verbosity > (v)) fprintf(stderr, x);        \
     } while (0)
 #endif /* !LINKER_DEBUG_TO_LOG */
 #else /* !LINKER_DEBUG */
