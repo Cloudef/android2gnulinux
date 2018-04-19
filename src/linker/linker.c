@@ -1615,8 +1615,7 @@ void apkenv_call_constructors_recursive(soinfo *si)
 {
     if (si->constructors_called)
         return;
-    if (strcmp(si->name, "libc.so") == 0)
-return;
+
     // Set this before actually calling the constructors, otherwise it doesn't
     // protect against recursive constructor calls. One simple example of
     // constructor recursion is the libc debug malloc, which is implemented in
