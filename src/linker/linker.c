@@ -1392,7 +1392,7 @@ static int apkenv_reloc_library(soinfo *si, Elf32_Rel *rel, unsigned count)
             {
                 Dl_info info;
                 ElfW(Sym) *extra;
-                if (dladdr1((void*)sym_addr, &info, (void**) &extra, RTLD_DL_SYMENT) && extra && ELF32_ST_TYPE(extra->st_info) == STT_FUNC)
+                if (dladdr1((void*)sym_addr, &info, (void**) &extra, RTLD_DL_SYMENT) && (!extra || ELF32_ST_TYPE(extra->st_info) == STT_FUNC))
                     sym_addr = (unsigned)wrapper_create(sym_name, (void*)sym_addr);
             } else
             if(s == NULL) {
