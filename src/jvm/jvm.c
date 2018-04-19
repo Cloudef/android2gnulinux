@@ -774,6 +774,7 @@ JNIEnv_SetObjectArrayElement(JNIEnv* p0, jobjectArray p1, jsize p2, jobject p3)
 static jobject
 jvm_new_array(struct jvm *jvm, const size_t size, const size_t element_sz, const char *klass)
 {
+   assert(jvm && klass);
    struct jvm_object o = { .array = { .size = size, .element_sz = element_sz }, .type = JVM_OBJECT_ARRAY };
    o.this_klass = jvm_make_class(jvm, klass);
    o.array.data = calloc(size, element_sz);
@@ -1093,6 +1094,7 @@ JNIEnv_MonitorExit(JNIEnv* p0, jobject p1)
 static jint
 JNIEnv_GetJavaVM(JNIEnv* env, JavaVM** vm)
 {
+   assert(env && vm);
    struct jvm *jvm = jnienv_get_jvm(env);
    *vm = (JavaVM*)&jvm->vm;
    return 0;
@@ -1473,6 +1475,7 @@ vm_init(JavaVM *vm, struct JNIInvokeInterface *invoke)
 void*
 jvm_get_native_method(struct jvm *jvm, const char *klass, const char *method)
 {
+   assert(jvm && klass && method);
    for (size_t i = 0; i < ARRAY_SIZE(jvm->methods) && jvm->methods[i].function; ++i) {
       if (!strcmp(jvm_get_object(jvm, jvm->methods[i].method.klass)->klass.name.data, klass) &&
           !strcmp(jvm->methods[i].method.name.data, method))
