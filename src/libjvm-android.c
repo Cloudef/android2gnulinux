@@ -83,3 +83,19 @@ android_content_Context_getFilesDir(JNIEnv *env, jobject object, va_list args)
    static jobject sv;
    return (sv ? sv : (sv = (*env)->AllocObject(env, (*env)->FindClass(env, "java/io/File"))));
 }
+
+jobject
+android_content_Context_getCacheDir(JNIEnv *env, jobject object, va_list args)
+{
+   assert(env && object);
+   static jobject sv;
+   return (sv ? sv : (sv = (*env)->AllocObject(env, (*env)->FindClass(env, "java/io/File"))));
+}
+
+jobject
+android_content_Context_getExternalCacheDir(JNIEnv *env, jobject object, va_list args)
+{
+   assert(env && object);
+   static jobject sv;
+   return (sv ? sv : (sv = (*env)->AllocObject(env, (*env)->FindClass(env, "java/io/File"))));
+}
