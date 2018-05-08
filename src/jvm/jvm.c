@@ -749,6 +749,17 @@ JNIEnv_GetStringUTFLength(JNIEnv* p0, jstring p1)
    return jvm_get_object(jnienv_get_jvm(p0), p1)->string.size;
 }
 
+static jobject
+jvm_new_array(struct jvm *jvm, const size_t size, const size_t element_sz, const char *klass)
+{
+   assert(jvm && klass);
+   struct jvm_object o = { .array = { .size = size, .element_sz = element_sz }, .type = JVM_OBJECT_ARRAY };
+   o.this_klass = jvm_make_class(jvm, klass);
+   o.array.data = calloc(size, element_sz);
+   assert(o.array.data);
+   return jvm_add_object_if_not_there(jvm, &o);
+}
+
 static jsize
 JNIEnv_GetArrayLength(JNIEnv* p0, jarray p1)
 {
@@ -759,29 +770,7 @@ JNIEnv_GetArrayLength(JNIEnv* p0, jarray p1)
 static jobjectArray
 JNIEnv_NewObjectArray(JNIEnv* p0, jsize p1, jclass p2, jobject p3)
 {
-   return NULL;
-}
-
-static jobject
-JNIEnv_GetObjectArrayElement(JNIEnv* p0, jobjectArray p1, jsize p2)
-{
-   return NULL;
-}
-
-static void
-JNIEnv_SetObjectArrayElement(JNIEnv* p0, jobjectArray p1, jsize p2, jobject p3)
-{
-}
-
-static jobject
-jvm_new_array(struct jvm *jvm, const size_t size, const size_t element_sz, const char *klass)
-{
-   assert(jvm && klass);
-   struct jvm_object o = { .array = { .size = size, .element_sz = element_sz }, .type = JVM_OBJECT_ARRAY };
-   o.this_klass = jvm_make_class(jvm, klass);
-   o.array.data = calloc(size, element_sz);
-   assert(o.array.data);
-   return jvm_add_object_if_not_there(jvm, &o);
+   return jvm_new_array(jnienv_get_jvm(p0), p1, sizeof(jobject), "[Ljava/lang/Object;");
 }
 
 static jbooleanArray
@@ -841,6 +830,26 @@ jvm_get_array_elements(struct jvm *jvm, jobject array, jboolean *is_copy)
       *is_copy = JNI_FALSE;
 
    return jvm_get_object(jvm, array)->array.data;
+}
+
+static jobject
+JNIEnv_GetObjectArrayElement(JNIEnv* p0, jobjectArray p1, jsize p2)
+{
+   const struct jvm_object *obj = jvm_get_object(jnienv_get_jvm(p0), p1);
+   if (!obj || obj->array.size <= (size_t)p2)
+      return NULL;
+
+   return (jobject)((uintptr_t*)obj->array.data)[p2];
+}
+
+static void
+JNIEnv_SetObjectArrayElement(JNIEnv* p0, jobjectArray p1, jsize p2, jobject p3)
+{
+   const struct jvm_object *obj = jvm_get_object(jnienv_get_jvm(p0), p1);
+   if (!obj || obj->array.size <= (size_t)p2)
+      return;
+
+   ((uintptr_t*)obj->array.data)[p2] = (uintptr_t)p3;
 }
 
 static jboolean*
