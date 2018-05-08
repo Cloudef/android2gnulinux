@@ -32,7 +32,15 @@ jstring
 android_os_Build_VERSION_RELEASE(JNIEnv *env, jobject object)
 {
    assert(env && object);
-   return (*env)->NewStringUTF(env, "4.4.4");
+   // XXX: android2gnulinux version, but we may need to fake this if apps rely on this
+   return (*env)->NewStringUTF(env, "1.0");
+}
+
+jint
+android_os_Build_VERSION_SDK_INT(JNIEnv *env, jobject object)
+{
+   assert(env && object);
+   return (jint)~0; // Always the latest and greatest, XXX: maybe tunable, as can change app behaviour
 }
 
 jstring
