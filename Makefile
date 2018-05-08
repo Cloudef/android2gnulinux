@@ -17,14 +17,14 @@ all: $(bins)
 %.a:
 	$(LINK.c) -c $(filter %.c,$^) -o $@
 
-%.so:
+runtime:
+	mkdir $@
+
+runtime/%.so: | runtime
 	$(LINK.c) -shared $(filter %.c %.a,$^) $(LDLIBS) -o $@
 
 $(bins): %:
 	$(LINK.c) $(filter %.c %.a,$^) $(LDLIBS) -o $@
-
-runtime:
-	mkdir -p $@
 
 verbose: src/wrapper/verbose.h
 wrapper.a: private CPPFLAGS += -D_GNU_SOURCE
@@ -32,28 +32,28 @@ wrapper.a: verbose src/wrapper/wrapper.c src/wrapper/wrapper.h
 
 runtime/libdl.so: private CPPFLAGS += -D_GNU_SOURCE -DLINKER_DEBUG=1
 runtime/libdl.so: private CFLAGS += -Wno-pedantic -Wno-variadic-macros -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast
-runtime/libdl.so: runtime wrapper.a src/linker/dlfcn.c src/linker/linker.c src/linker/linker_environ.c src/linker/rt.c src/linker/strlcpy.c
+runtime/libdl.so: wrapper.a src/linker/dlfcn.c src/linker/linker.c src/linker/linker_environ.c src/linker/rt.c src/linker/strlcpy.c
 runtime/libc.so: private CPPFLAGS += -D_GNU_SOURCE
 runtime/libc.so: private CFLAGS += -Wno-deprecated-declarations
 runtime/libc.so: private LDLIBS += `pkg-config --libs libbsd libunwind`
-runtime/libc.so: runtime verbose src/libc.c
+runtime/libc.so: verbose src/libc.c
 runtime/libpthread.so: private CPPFLAGS += -D_GNU_SOURCE
 runtime/libpthread.so: private LDLIBS += -lpthread
-runtime/libpthread.so: runtime src/libpthread.c
+runtime/libpthread.so: src/libpthread.c
 runtime/libandroid.so: private LDLIBS += `pkg-config --libs glfw3`
-runtime/libandroid.so: runtime src/libandroid.c
-runtime/liblog.so: runtime src/liblog.c
+runtime/libandroid.so: src/libandroid.c
+runtime/liblog.so: src/liblog.c
 runtime/libEGL.so: private CPPFLAGS += -D_GNU_SOURCE
 runtime/libEGL.so: private LDLIBS += -lEGL `pkg-config --libs glfw3`
-runtime/libEGL.so: runtime src/libEGL.c
+runtime/libEGL.so: src/libEGL.c
 native: runtime/libdl.so runtime/libc.so runtime/libpthread.so runtime/libandroid.so runtime/liblog.so runtime/libEGL.so
 
 jvm.a: private CPPFLAGS += -D_GNU_SOURCE
 jvm.a: private CFLAGS += -Wno-unused-variable -Wno-pedantic
 jvm.a: wrapper.a src/jvm/jvm.c
 runtime/libjvm-java.so: private CPPFLAGS += -D_GNU_SOURCE
-runtime/libjvm-java.so: runtime verbose src/libjvm-java.c
-runtime/libjvm-android.so: runtime verbose src/libjvm-android.c
+runtime/libjvm-java.so: verbose src/libjvm-java.c
+runtime/libjvm-android.so: verbose src/libjvm-android.c
 java: runtime/libjvm-java.so runtime/libjvm-android.so
 
 app: private LDLIBS += -ldl -Wl,-rpath,runtime runtime/libdl.so runtime/libpthread.so
