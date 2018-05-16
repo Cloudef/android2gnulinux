@@ -481,6 +481,14 @@ jvm_form_symbol(struct jvm *jvm, jmethodID method_id, char *symbol, const size_t
    cstr_replace(symbol, '$', '_');
 }
 
+static jobject
+jvm_stub_class_from_method(struct jvm *jvm, jmethodID method_id)
+{
+   char symbol[255];
+   jvm_form_symbol(jvm, method_id, symbol, sizeof(symbol));
+   return jvm_make_class(jvm, symbol);
+}
+
 static void*
 jvm_wrap_method(struct jvm *jvm, jmethodID method_id)
 {
@@ -567,103 +575,110 @@ JNIEnv_CallNonvirtualVoidMethodA(JNIEnv* p0, jobject p1, jclass p2, jmethodID p3
 // N == Call method type convention (Long, Float, StaticLong, StaticFloat, etc...)
 // T == C type of return value
 // C == Type of second argument (jclass for static call, jobject for instance call)
-#define gen_jnienv_method_call(N, T, C) \
+// D == Default return value
+#define gen_jnienv_method_call(N, T, C, D) \
    static T \
-   JNIEnv_Call##N##MethodV(JNIEnv *p0, C p1, jmethodID p2, va_list p3) { \
-      assert(p0 && p1 && p2); \
+   JNIEnv_Call##N##MethodV(JNIEnv *p0, C p1, jmethodID method, va_list p3) { \
+      assert(p0 && p1 && method); \
       union { T (*fun)(JNIEnv*, C, va_list); void *ptr; } f; \
-      f.ptr = jvm_wrap_method(jnienv_get_jvm(p0), p2); \
-      return (f.ptr ? f.fun(p0, p1, p3) : 0); \
+      f.ptr = jvm_wrap_method(jnienv_get_jvm(p0), method); \
+      return (f.ptr ? f.fun(p0, p1, p3) : D); \
    } \
    static T \
-   JNIEnv_Call##N##MethodA(JNIEnv* p0, C p1, jmethodID p2, jvalue* p3) { \
-      assert(p0 && p1 && p2); \
+   JNIEnv_Call##N##MethodA(JNIEnv* p0, C p1, jmethodID method, jvalue* p3) { \
+      assert(p0 && p1 && method); \
       union { T (*fun)(JNIEnv*, C, jvalue*); void *ptr; } f; \
-      f.ptr = jvm_wrap_method(jnienv_get_jvm(p0), p2); \
-      return (f.ptr ? f.fun(p0, p1, p3) : 0); \
+      f.ptr = jvm_wrap_method(jnienv_get_jvm(p0), method); \
+      return (f.ptr ? f.fun(p0, p1, p3) : D); \
    } \
    static T \
-   JNIEnv_Call##N##Method(JNIEnv* p0, C p1, jmethodID p2, ...) { \
+   JNIEnv_Call##N##Method(JNIEnv* p0, C p1, jmethodID method, ...) { \
       va_list ap; \
-      va_start(ap, p2); \
-      const T r = JNIEnv_Call##N##MethodV(p0, p1, p2, ap); \
+      va_start(ap, method); \
+      const T r = JNIEnv_Call##N##MethodV(p0, p1, method, ap); \
       va_end(ap); \
       return r; \
    }
 
 // N == Call method type name (Long, Float, etc...)
 // T == C type of return value
-#define gen_jnienv_nonvirtual_method_call(N, T) \
+// D == Default return value
+#define gen_jnienv_nonvirtual_method_call(N, T, D) \
    static T \
-   JNIEnv_CallNonvirtual##N##MethodV(JNIEnv *p0, jobject p1, jclass p2, jmethodID p3, va_list p4) { \
-      assert(p0 && p1 && p2 && p3); \
+   JNIEnv_CallNonvirtual##N##MethodV(JNIEnv *p0, jobject p1, jclass p2, jmethodID method, va_list p4) { \
+      assert(p0 && p1 && p2 && method); \
       union { T (*fun)(JNIEnv*, jobject, jclass, va_list); void *ptr; } f; \
       f.ptr = jvm_wrap_method(jnienv_get_jvm(p0), p2); \
-      return (f.ptr ? f.fun(p0, p1, p2, p4) : 0); \
+      return (f.ptr ? f.fun(p0, p1, p2, p4) : D); \
    } \
    static T \
-   JNIEnv_CallNonvirtual##N##MethodA(JNIEnv *p0, jobject p1, jclass p2, jmethodID p3, jvalue *p4) { \
-      assert(p0 && p1 && p2 && p3); \
+   JNIEnv_CallNonvirtual##N##MethodA(JNIEnv *p0, jobject p1, jclass p2, jmethodID method, jvalue *p4) { \
+      assert(p0 && p1 && p2 && method); \
       union { T (*fun)(JNIEnv*, jobject, jclass, jvalue*); void *ptr; } f; \
       f.ptr = jvm_wrap_method(jnienv_get_jvm(p0), p2); \
-      return (f.ptr ? f.fun(p0, p1, p2, p4) : 0); \
+      return (f.ptr ? f.fun(p0, p1, p2, p4) : D); \
    } \
    static T \
-   JNIEnv_CallNonvirtual##N##Method(JNIEnv* p0, jobject p1, jclass p2, jmethodID p3, ...) { \
+   JNIEnv_CallNonvirtual##N##Method(JNIEnv* p0, jobject p1, jclass p2, jmethodID method, ...) { \
       va_list ap; \
-      va_start(ap, p3); \
-      const T r = JNIEnv_CallNonvirtual##N##MethodV(p0, p1, p2, p3, ap); \
+      va_start(ap, method); \
+      const T r = JNIEnv_CallNonvirtual##N##MethodV(p0, p1, p2, method, ap); \
       va_end(ap); \
       return r; \
    }
 
 // N == Method type name
 // T == C type of return value
-#define gen_jnienv_method(N, T) \
-   gen_jnienv_method_call(N, T, jobject) \
-   gen_jnienv_method_call(Static##N, T, jclass) \
-   gen_jnienv_nonvirtual_method_call(N, T)
+// D == Default return value
+#define gen_jnienv_method(N, T, D) \
+   gen_jnienv_method_call(N, T, jobject, D) \
+   gen_jnienv_method_call(Static##N, T, jclass, D) \
+   gen_jnienv_nonvirtual_method_call(N, T, D)
 
-gen_jnienv_method(Object, jobject)
-gen_jnienv_method(Boolean, jboolean)
-gen_jnienv_method(Byte, jbyte)
-gen_jnienv_method(Char, jchar)
-gen_jnienv_method(Short, jshort)
-gen_jnienv_method(Int, jint)
-gen_jnienv_method(Long, jlong)
-gen_jnienv_method(Float, jfloat)
-gen_jnienv_method(Double, jdouble)
+gen_jnienv_method(Object, jobject, jvm_stub_class_from_method(jnienv_get_jvm(p0), method))
+gen_jnienv_method(Boolean, jboolean, false)
+gen_jnienv_method(Byte, jbyte, 0)
+gen_jnienv_method(Char, jchar, 0)
+gen_jnienv_method(Short, jshort, 0)
+gen_jnienv_method(Int, jint, 0)
+gen_jnienv_method(Long, jlong, 0)
+gen_jnienv_method(Float, jfloat, 0)
+gen_jnienv_method(Double, jdouble, 0)
 
 // N == Property method type convention (Long, Float, StaticLong, StaticFloat, etc...)
 // T == C type of return value
-#define gen_jnienv_property_call(N, T) \
+// D == Default return value
+#define gen_jnienv_property_call(N, T, D) \
    static T \
-   JNIEnv_Get##N##Field(JNIEnv *p0, jclass p1, jfieldID p2) { \
-      assert(p0 && p1 && p2); \
+   JNIEnv_Get##N##Field(JNIEnv *p0, jclass p1, jfieldID method) { \
+      assert(p0 && p1 && method); \
       union { T (*fun)(JNIEnv*, jobject); void *ptr; } f; \
-      f.ptr = jvm_wrap_method(jnienv_get_jvm(p0), (jmethodID)p2); \
-      return (f.ptr ? f.fun(p0, p1) : 0); \
+      f.ptr = jvm_wrap_method(jnienv_get_jvm(p0), (jmethodID)method); \
+      return (f.ptr ? f.fun(p0, p1) : D); \
    } \
    static void \
-   JNIEnv_Set##N##Field(JNIEnv* p0, jclass p1, jfieldID p2, T p3) { \
-      assert(p0 && p1 && p2); \
+   JNIEnv_Set##N##Field(JNIEnv* p0, jclass p1, jfieldID method, T p3) { \
+      assert(p0 && p1 && method); \
+      union { void (*fun)(JNIEnv*, jobject, T); void *ptr; } f; \
+      if ((f.ptr = jvm_wrap_method(jnienv_get_jvm(p0), (jmethodID)method))) \
+         f.fun(p0, p1, p3); \
    }
 
 // N == Property type name
 // T == C type of return value
-#define gen_jnienv_property(N, T) \
-   gen_jnienv_property_call(N, T) \
-   gen_jnienv_property_call(Static##N, T)
+#define gen_jnienv_property(N, T, D) \
+   gen_jnienv_property_call(N, T, D) \
+   gen_jnienv_property_call(Static##N, T, D)
 
-gen_jnienv_property(Object, jobject)
-gen_jnienv_property(Boolean, jboolean)
-gen_jnienv_property(Byte, jbyte)
-gen_jnienv_property(Char, jchar)
-gen_jnienv_property(Short, jshort)
-gen_jnienv_property(Int, jint)
-gen_jnienv_property(Long, jlong)
-gen_jnienv_property(Float, jfloat)
-gen_jnienv_property(Double, jdouble)
+gen_jnienv_property(Object, jobject, jvm_stub_class_from_method(jnienv_get_jvm(p0), (jmethodID)method))
+gen_jnienv_property(Boolean, jboolean, false)
+gen_jnienv_property(Byte, jbyte, 0)
+gen_jnienv_property(Char, jchar, 0)
+gen_jnienv_property(Short, jshort, 0)
+gen_jnienv_property(Int, jint, 0)
+gen_jnienv_property(Long, jlong, 0)
+gen_jnienv_property(Float, jfloat, 0)
+gen_jnienv_property(Double, jdouble, 0)
 
 static jmethodID
 jvm_make_method(struct jvm *jvm, jclass klass, const char *name, const char *sig)
