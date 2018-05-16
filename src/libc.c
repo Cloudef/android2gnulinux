@@ -29,7 +29,7 @@ struct bionic_sigaction {
       void(* _sa_sigaction) (int, siginfo_t *, void *);
    } _u;
    sigset_t sa_mask;
-   unsigned long sa_flags;
+   int sa_flags;
    void(* sa_restorer) (void);
 };
 #else
