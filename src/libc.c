@@ -163,16 +163,20 @@ bionic_readdir_r(DIR *dirp, struct bionic_dirent *entry, struct bionic_dirent **
 int
 bionic_sigaction(int sig, const struct bionic_sigaction *restrict act, struct bionic_sigaction *restrict oact)
 {
-   assert(act);
+   verbose("%d, %p, %p", sig, act, oact);
 
-   struct sigaction goact, gact = {
-      .sa_handler = act->_u._sa_handler,
-      .sa_mask = act->sa_mask,
-      .sa_flags = act->sa_flags,
-      .sa_restorer = act->sa_restorer,
-   };
+   if (!act)
+      return 0;
 
-   const int ret = sigaction(sig, &gact, &goact);
+   struct sigaction goact = {0}, gact = {0};
+   if (act) {
+      gact.sa_handler = act->_u._sa_handler;
+      gact.sa_mask = act->sa_mask;
+      gact.sa_flags = act->sa_flags;
+      gact.sa_restorer = act->sa_restorer;
+   }
+
+   const int ret = sigaction(sig, (act ? &gact : NULL), (oact ? &goact : NULL));
 
    if (oact) {
       oact->_u._sa_handler = goact.sa_handler;
