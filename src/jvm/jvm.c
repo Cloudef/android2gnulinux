@@ -246,6 +246,14 @@ jvm_get_object(struct jvm *jvm, const jobject o)
    return (o ? &jvm->objects[(uintptr_t)o - 1] : NULL);
 }
 
+static struct jvm_object*
+jvm_get_object_of_type(struct jvm *jvm, const jobject o, const enum jvm_object_type type)
+{
+   struct jvm_object *obj = jvm_get_object(jvm, o);
+   // assert(!obj || obj->type == type);
+   return obj;
+}
+
 static struct jvm*
 jnienv_get_jvm(JNIEnv *env)
 {
@@ -474,9 +482,9 @@ static void
 jvm_form_symbol(struct jvm *jvm, jmethodID method_id, char *symbol, const size_t symbol_sz)
 {
    assert(jvm && method_id);
-   struct jvm_method *method = &jvm_get_object(jvm, method_id)->method;
-   verbose("%s::%s::%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data, method->signature.data);
-   snprintf(symbol, symbol_sz, "%s_%s", jvm_get_object(jvm, method->klass)->klass.name.data, method->name.data);
+   struct jvm_method *method = &jvm_get_object_of_type(jvm, method_id, JVM_OBJECT_METHOD)->method;
+   verbose("%s::%s::%s", jvm_get_object_of_type(jvm, method->klass, JVM_OBJECT_CLASS)->klass.name.data, method->name.data, method->signature.data);
+   snprintf(symbol, symbol_sz, "%s_%s", jvm_get_object_of_type(jvm, method->klass, JVM_OBJECT_CLASS)->klass.name.data, method->name.data);
    cstr_replace(symbol, '/', '_');
    cstr_replace(symbol, '$', '_');
 }
@@ -684,7 +692,7 @@ static jmethodID
 jvm_make_method(struct jvm *jvm, jclass klass, const char *name, const char *sig)
 {
    assert(jvm && klass && name && sig);
-   verbose("%s::%s::%s", jvm_get_object(jvm, klass)->klass.name.data, name, sig);
+   verbose("%s::%s::%s", jvm_get_object_of_type(jvm, klass, JVM_OBJECT_CLASS)->klass.name.data, name, sig);
    struct jvm_object o = { .method.klass = klass, .type = JVM_OBJECT_METHOD };
    jvm_string_set_cstr(&o.method.name, name, true);
    jvm_string_set_cstr(&o.method.signature, sig, true);
@@ -761,7 +769,7 @@ static jsize
 JNIEnv_GetStringUTFLength(JNIEnv* p0, jstring p1)
 {
    assert(p0 && p1);
-   return jvm_get_object(jnienv_get_jvm(p0), p1)->string.size;
+   return jvm_get_object_of_type(jnienv_get_jvm(p0), p1, JVM_OBJECT_STRING)->string.size;
 }
 
 static jobject
@@ -779,7 +787,7 @@ static jsize
 JNIEnv_GetArrayLength(JNIEnv* p0, jarray p1)
 {
    assert(p0 && p1);
-   return jvm_get_object(jnienv_get_jvm(p0), p1)->array.size;
+   return jvm_get_object_of_type(jnienv_get_jvm(p0), p1, JVM_OBJECT_ARRAY)->array.size;
 }
 
 static jobjectArray
@@ -844,13 +852,13 @@ jvm_get_array_elements(struct jvm *jvm, jobject array, jboolean *is_copy)
    if (is_copy)
       *is_copy = JNI_FALSE;
 
-   return jvm_get_object(jvm, array)->array.data;
+   return jvm_get_object_of_type(jvm, array, JVM_OBJECT_ARRAY)->array.data;
 }
 
 static jobject
 JNIEnv_GetObjectArrayElement(JNIEnv* p0, jobjectArray p1, jsize p2)
 {
-   const struct jvm_object *obj = jvm_get_object(jnienv_get_jvm(p0), p1);
+   const struct jvm_object *obj = jvm_get_object_of_type(jnienv_get_jvm(p0), p1, JVM_OBJECT_ARRAY);
    if (!obj || obj->array.size <= (size_t)p2)
       return NULL;
 
@@ -860,7 +868,7 @@ JNIEnv_GetObjectArrayElement(JNIEnv* p0, jobjectArray p1, jsize p2)
 static void
 JNIEnv_SetObjectArrayElement(JNIEnv* p0, jobjectArray p1, jsize p2, jobject p3)
 {
-   const struct jvm_object *obj = jvm_get_object(jnienv_get_jvm(p0), p1);
+   const struct jvm_object *obj = jvm_get_object_of_type(jnienv_get_jvm(p0), p1, JVM_OBJECT_ARRAY);
    if (!obj || obj->array.size <= (size_t)p2)
       return;
 
@@ -964,7 +972,7 @@ static void
 jvm_get_array_region(struct jvm *jvm, jobject obj, const size_t offset, const size_t size, void *buf)
 {
    assert(jvm && obj);
-   const struct jvm_array *array = &jvm_get_object(jvm, obj)->array;
+   const struct jvm_array *array = &jvm_get_object_of_type(jvm, obj, JVM_OBJECT_ARRAY)->array;
    assert(offset + size <= array->size);
    memcpy(buf, (char*)array->data + offset * array->element_sz, size * array->element_sz);
 }
@@ -1015,7 +1023,7 @@ static void
 jvm_set_array_region(struct jvm *jvm, jobject obj, const size_t offset, const size_t size, const void *buf)
 {
    assert(jvm && obj);
-   struct jvm_array *array = &jvm_get_object(jvm, obj)->array;
+   struct jvm_array *array = &jvm_get_object_of_type(jvm, obj, JVM_OBJECT_ARRAY)->array;
    assert(offset + size <= array->size);
    memcpy((char*)array->data + offset * array->element_sz, buf, size * array->element_sz);
 }
@@ -1079,7 +1087,7 @@ jvm_register_native_method(struct jvm *jvm, const jclass klass, const JNINativeM
    jvm_string_set_cstr(&jvm->methods[i].method.name, method->name, true);
    jvm_string_set_cstr(&jvm->methods[i].method.signature, method->signature, true);
    jvm->methods[i].function = method->fnPtr;
-   verbose_log("%s::%s::%s", jvm_get_object(jvm, klass)->klass.name.data, method->name, method->signature);
+   verbose_log("%s::%s::%s", jvm_get_object_of_type(jvm, klass, JVM_OBJECT_CLASS)->klass.name.data, method->name, method->signature);
 }
 
 static jint
@@ -1201,8 +1209,8 @@ JNIEnv_GetStringUTFChars(JNIEnv *env, jstring string, jboolean *isCopy)
    if (isCopy)
       *isCopy = JNI_FALSE;
 
-   verbose("%s", (string ? jvm_get_object(jnienv_get_jvm(env), string)->string.data : "(null)"));
-   return (string ? jvm_get_object(jnienv_get_jvm(env), string)->string.data : "(null)");
+   verbose("%s", (string ? jvm_get_object_of_type(jnienv_get_jvm(env), string, JVM_OBJECT_STRING)->string.data : "(null)"));
+   return (string ? jvm_get_object_of_type(jnienv_get_jvm(env), string, JVM_OBJECT_STRING)->string.data : "(null)");
 }
 
 static void
@@ -1503,7 +1511,7 @@ jvm_get_native_method(struct jvm *jvm, const char *klass, const char *method)
 {
    assert(jvm && klass && method);
    for (size_t i = 0; i < ARRAY_SIZE(jvm->methods) && jvm->methods[i].function; ++i) {
-      if (!strcmp(jvm_get_object(jvm, jvm->methods[i].method.klass)->klass.name.data, klass) &&
+      if (!strcmp(jvm_get_object_of_type(jvm, jvm->methods[i].method.klass, JVM_OBJECT_CLASS)->klass.name.data, klass) &&
           !strcmp(jvm->methods[i].method.name.data, method))
          return wrapper_create(method, jvm->methods[i].function);
    }
