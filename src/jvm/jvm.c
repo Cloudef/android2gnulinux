@@ -1247,13 +1247,13 @@ JNIEnv_GetStringUTFChars(JNIEnv *env, jstring string, jboolean *isCopy)
       *isCopy = JNI_FALSE;
 
    verbose("%s", (string ? jvm_get_object_of_type(jnienv_get_jvm(env), string, JVM_OBJECT_STRING)->string.data : "(null)"));
-   return (string ? jvm_get_object_of_type(jnienv_get_jvm(env), string, JVM_OBJECT_STRING)->string.data : "(null)");
+   return (string ? jvm_get_object_of_type(jnienv_get_jvm(env), string, JVM_OBJECT_STRING)->string.data : NULL);
 }
 
 static void
 JNIEnv_ReleaseStringUTFChars(JNIEnv *env, jstring string, const char *utf)
 {
-   assert(env && string && utf);
+   assert(env && string);
 }
 
 #define WRAP(x) wrapper_create(#x, x)
