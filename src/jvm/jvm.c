@@ -246,11 +246,49 @@ jvm_get_object(struct jvm *jvm, const jobject o)
    return (o ? &jvm->objects[(uintptr_t)o - 1] : NULL);
 }
 
+static void
+jvm_object_print(struct jvm *jvm, const struct jvm_object *obj)
+{
+   if (!obj) {
+      verbose_log("[NULL]");
+      return;
+   }
+
+   switch (obj->type) {
+      case JVM_OBJECT_OPAQUE:
+         verbose_log("[OPAQUE]");
+         break;
+      case JVM_OBJECT_ARRAY:
+         verbose_log("[ARRAY] element_sz: %zu size: %zu", obj->array.element_sz, obj->array.size);
+         break;
+      case JVM_OBJECT_METHOD:
+         verbose_log("[METHOD] %s::%s::%s", jvm_get_object(jvm, obj->method.klass)->klass.name.data, obj->method.name.data, obj->method.signature.data);
+         break;
+      case JVM_OBJECT_CLASS:
+         verbose_log("[CLASS] %s", obj->klass.name.data);
+         break;
+      case JVM_OBJECT_STRING:
+         verbose_log("[STRING] (%d) %s (%zu)", obj->string.heap, obj->string.data, obj->string.size);
+         break;
+
+      case JVM_OBJECT_NONE:
+      case JVM_OBJECT_LAST:
+         verbose_log("[INVALID OBJECT]");
+         break;
+   }
+}
+
 static struct jvm_object*
 jvm_get_object_of_type(struct jvm *jvm, const jobject o, const enum jvm_object_type type)
 {
    struct jvm_object *obj = jvm_get_object(jvm, o);
-   // assert(!obj || obj->type == type);
+   if (obj && obj->type != type) {
+      static struct jvm_object dummy; // acts as zero initialized memory, so in practice we return NULLs and 0
+      verbose_log("object handle: %p", o);
+      verbose_log("expected object of type %d, but got object of type %d instead", type, obj->type);
+      jvm_object_print(jvm, obj);
+      return &dummy;
+   }
    return obj;
 }
 
@@ -298,13 +336,15 @@ JNIEnv_FindClass(JNIEnv* p0, const char* p1)
 static jmethodID
 JNIEnv_FromReflectedMethod(JNIEnv* p0, jobject p1)
 {
-   return NULL;
+   jvm_object_print(jnienv_get_jvm(p0), jvm_get_object(jnienv_get_jvm(p0), p1));
+   return p1;
 }
 
 static jfieldID
 JNIEnv_FromReflectedField(JNIEnv* p0, jobject p1)
 {
-   return NULL;
+   jvm_object_print(jnienv_get_jvm(p0), jvm_get_object(jnienv_get_jvm(p0), p1));
+   return p1;
 }
 
 static jobject
@@ -380,17 +420,20 @@ static jobject
 JNIEnv_NewGlobalRef(JNIEnv* p0, jobject p1)
 {
    // FIXME: add ref counting
+   jvm_object_print(jnienv_get_jvm(p0), jvm_get_object(jnienv_get_jvm(p0), p1));
    return p1;
 }
 
 static void
 JNIEnv_DeleteGlobalRef(JNIEnv* p0, jobject p1)
 {
+   jvm_object_print(jnienv_get_jvm(p0), jvm_get_object(jnienv_get_jvm(p0), p1));
 }
 
 static void
 JNIEnv_DeleteLocalRef(JNIEnv* p0, jobject p1)
 {
+   jvm_object_print(jnienv_get_jvm(p0), jvm_get_object(jnienv_get_jvm(p0), p1));
 }
 
 static jboolean
@@ -403,6 +446,7 @@ static jobject
 JNIEnv_NewLocalRef(JNIEnv* p0, jobject p1)
 {
    // FIXME: add ref counting
+   jvm_object_print(jnienv_get_jvm(p0), jvm_get_object(jnienv_get_jvm(p0), p1));
    return NULL;
 }
 
@@ -487,14 +531,6 @@ jvm_form_symbol(struct jvm *jvm, jmethodID method_id, char *symbol, const size_t
    snprintf(symbol, symbol_sz, "%s_%s", jvm_get_object_of_type(jvm, method->klass, JVM_OBJECT_CLASS)->klass.name.data, method->name.data);
    cstr_replace(symbol, '/', '_');
    cstr_replace(symbol, '$', '_');
-}
-
-static jobject
-jvm_stub_class_from_method(struct jvm *jvm, jmethodID method_id)
-{
-   char symbol[255];
-   jvm_form_symbol(jvm, method_id, symbol, sizeof(symbol));
-   return jvm_make_class(jvm, symbol);
 }
 
 static void*
@@ -643,7 +679,7 @@ JNIEnv_CallNonvirtualVoidMethodA(JNIEnv* p0, jobject p1, jclass p2, jmethodID p3
    gen_jnienv_method_call(Static##N, T, jclass, D) \
    gen_jnienv_nonvirtual_method_call(N, T, D)
 
-gen_jnienv_method(Object, jobject, jvm_stub_class_from_method(jnienv_get_jvm(p0), method))
+gen_jnienv_method(Object, jobject, method)
 gen_jnienv_method(Boolean, jboolean, false)
 gen_jnienv_method(Byte, jbyte, 0)
 gen_jnienv_method(Char, jchar, 0)
@@ -678,7 +714,7 @@ gen_jnienv_method(Double, jdouble, 0)
    gen_jnienv_property_call(N, T, D) \
    gen_jnienv_property_call(Static##N, T, D)
 
-gen_jnienv_property(Object, jobject, jvm_stub_class_from_method(jnienv_get_jvm(p0), (jmethodID)method))
+gen_jnienv_property(Object, jobject, method)
 gen_jnienv_property(Boolean, jboolean, false)
 gen_jnienv_property(Byte, jbyte, 0)
 gen_jnienv_property(Char, jchar, 0)
