@@ -230,6 +230,7 @@ static jobject
 jvm_add_object_if_not_there(struct jvm *jvm, struct jvm_object *needle)
 {
    assert(jvm && needle);
+
    jobject o;
    if ((o = jvm_find_object(jvm, needle))) {
       jvm_object_release(needle);
