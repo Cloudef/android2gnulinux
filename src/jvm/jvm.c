@@ -317,12 +317,27 @@ JNIEnv_DefineClass(JNIEnv* p0, const char* p1, jobject p2, const jbyte* p3, jsiz
    return NULL;
 }
 
+static char*
+cstr_replace(char *cstr, const char replace, const char with)
+{
+   assert(cstr && replace != with);
+
+   if (replace == with)
+      return cstr;
+
+   char *s = cstr;
+   while ((s = strchr(s, replace)))
+      *s = with;
+   return cstr;
+}
+
 static jclass
 jvm_make_class(struct jvm *jvm, const char *name)
 {
    assert(jvm && name);
    struct jvm_object o = { .this_klass = (jclass)1, .type = JVM_OBJECT_CLASS };
    jvm_string_set_cstr(&o.klass.name, name, true);
+   cstr_replace((char*)o.klass.name.data, '.', '/');
    return jvm_add_object_if_not_there(jvm, &o);
 }
 
@@ -507,20 +522,6 @@ JNIEnv_IsInstanceOf(JNIEnv* p0, jobject p1, jclass p2)
    verbose("%s", jvm_get_object(jnienv_get_jvm(p0), jvm_get_object(jnienv_get_jvm(p0), p1)->this_klass)->klass.name.data);
    verbose("%s", jvm_get_object(jnienv_get_jvm(p0), p2)->klass.name.data);
    return jvm_get_object(jnienv_get_jvm(p0), p1)->this_klass == p2;
-}
-
-static char*
-cstr_replace(char *cstr, const char replace, const char with)
-{
-   assert(cstr && replace != with);
-
-   if (replace == with)
-      return cstr;
-
-   char *s = cstr;
-   while ((s = strchr(s, replace)))
-      *s = with;
-   return cstr;
 }
 
 static void
