@@ -54,10 +54,11 @@ jvm.a: wrapper.a src/jvm/jvm.c
 runtime/libjvm-java.so: private CPPFLAGS += -D_GNU_SOURCE
 runtime/libjvm-java.so: verbose src/libjvm-java.c
 runtime/libjvm-android.so: verbose src/libjvm-android.c
-java: runtime/libjvm-java.so runtime/libjvm-android.so
+runtime/libjvm-unity.so: verbose src/libjvm-unity.c
+java: runtime/libjvm-java.so runtime/libjvm-android.so runtime/libjvm-unity.so
 
 app: private LDLIBS += -ldl -Wl,-rpath,runtime runtime/libdl.so runtime/libpthread.so
-app: private LDLIBS += runtime/libjvm-java.so runtime/libjvm-android.so
+app: private LDLIBS += runtime/libjvm-java.so runtime/libjvm-android.so runtime/libjvm-unity.so
 app: wrapper.a src/app.c native jvm.a java
 
 install-bin: $(bins)
