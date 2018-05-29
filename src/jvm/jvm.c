@@ -257,7 +257,7 @@ jvm_object_print(struct jvm *jvm, const struct jvm_object *obj)
 
    switch (obj->type) {
       case JVM_OBJECT_OPAQUE:
-         verbose_log("[OPAQUE]");
+         verbose_log("[OPAQUE] %s", jvm_get_object(jvm, obj->this_klass)->klass.name.data);
          break;
       case JVM_OBJECT_ARRAY:
          verbose_log("[ARRAY] element_sz: %zu size: %zu", obj->array.element_sz, obj->array.size);
