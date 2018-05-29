@@ -525,10 +525,9 @@ JNIEnv_IsInstanceOf(JNIEnv* p0, jobject p1, jclass p2)
 }
 
 static void
-jvm_form_symbol(struct jvm *jvm, jmethodID method_id, char *symbol, const size_t symbol_sz)
+jvm_form_symbol(struct jvm *jvm, const struct jvm_method *method, char *symbol, const size_t symbol_sz)
 {
-   assert(jvm && method_id);
-   struct jvm_method *method = &jvm_get_object_of_type(jvm, method_id, JVM_OBJECT_METHOD)->method;
+   assert(jvm && method);
    verbose("%s::%s::%s", jvm_get_object_of_type(jvm, method->klass, JVM_OBJECT_CLASS)->klass.name.data, method->name.data, method->signature.data);
    snprintf(symbol, symbol_sz, "%s_%s", jvm_get_object_of_type(jvm, method->klass, JVM_OBJECT_CLASS)->klass.name.data, method->name.data);
    cstr_replace(symbol, '/', '_');
@@ -539,7 +538,21 @@ static void*
 jvm_wrap_method(struct jvm *jvm, jmethodID method_id)
 {
    char symbol[255];
-   jvm_form_symbol(jvm, method_id, symbol, sizeof(symbol));
+   struct jvm_method method = jvm_get_object_of_type(jvm, method_id, JVM_OBJECT_METHOD)->method;
+   jvm_form_symbol(jvm, &method, symbol, sizeof(symbol));
+
+   void *sym;
+   if ((sym = wrapper_create(symbol, dlsym(RTLD_DEFAULT, symbol))))
+      return sym;
+
+   method.klass = jvm_make_class(jvm, "java/lang/Object");
+   jvm_form_symbol(jvm, &method, symbol, sizeof(symbol));
+
+   if ((sym = wrapper_create(symbol, dlsym(RTLD_DEFAULT, symbol))))
+      return sym;
+
+   method.klass = jvm_make_class(jvm, "java/lang/Class");
+   jvm_form_symbol(jvm, &method, symbol, sizeof(symbol));
    return wrapper_create(symbol, dlsym(RTLD_DEFAULT, symbol));
 }
 
