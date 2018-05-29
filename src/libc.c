@@ -163,7 +163,7 @@ bionic_readdir_r(DIR *dirp, struct bionic_dirent *entry, struct bionic_dirent **
 int
 bionic_sigaction(int sig, const struct bionic_sigaction *restrict act, struct bionic_sigaction *restrict oact)
 {
-   verbose("%d, %p, %p", sig, act, oact);
+   verbose("%d, %p, %p", sig, (void*)act, (void*)oact);
 
    if (!act)
       return 0;
