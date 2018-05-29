@@ -54,7 +54,7 @@ struct jvm {
    // every class object's `this_class` member points back to [0], causing recursion.
    // Every other object or class definition is created lazily as needed, only [0] is special.
    // `jobject`'s we return through JNI are actually (index+1) to this array, not pointers.
-   struct jvm_object objects[256];
+   struct jvm_object objects[4096];
 
    // Native methods registered by the application.
    // Nothing special, but there's no need to access this array either really.
