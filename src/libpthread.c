@@ -121,20 +121,6 @@ bionic___pthread_cleanup_pop(void *c, int execute)
 }
 
 int
-bionic_pthread_cond_timedwait_relative_np(bionic_cond_t *cond, bionic_mutex_t *mutex, const struct timespec *reltime)
-{
-   assert(0 && "implement");
-   return 0;
-}
-
-int
-bionic_pthread_cond_timedwait_monotonic_np(bionic_cond_t *cond, bionic_mutex_t *mutex, const struct timespec *abstime)
-{
-   assert(0 && "implement");
-   return 0;
-}
-
-int
 bionic_sem_destroy(bionic_sem_t *sem)
 {
    assert(sem);
@@ -451,4 +437,34 @@ bionic_pthread_cond_timedwait(bionic_cond_t *cond, bionic_mutex_t *mutex, const 
    INIT_IF_NOT_MAPPED(cond, default_pthread_cond_init);
    INIT_IF_NOT_MAPPED(mutex, default_pthread_mutex_init);
    return pthread_cond_timedwait(cond->glibc, mutex->glibc, abs_timeout);
+}
+
+int
+bionic_pthread_cond_timedwait_relative_np(bionic_cond_t *cond, bionic_mutex_t *mutex, const struct timespec *reltime)
+{
+   assert(cond && mutex && reltime);
+   struct timespec tv;
+   clock_gettime(CLOCK_REALTIME, &tv);
+   tv.tv_sec += reltime->tv_sec;
+   tv.tv_nsec += reltime->tv_nsec;
+   if (tv.tv_nsec >= 1000000000) {
+      ++tv.tv_sec;
+      tv.tv_nsec -= 1000000000;
+   }
+   return bionic_pthread_cond_timedwait(cond, mutex, &tv);
+}
+
+int
+bionic_pthread_cond_timedwait_monotonic_np(bionic_cond_t *cond, bionic_mutex_t *mutex, const struct timespec *abstime)
+{
+   assert(cond && mutex && abstime);
+   struct timespec tv;
+   clock_gettime(CLOCK_MONOTONIC, &tv);
+   tv.tv_sec += abstime->tv_sec;
+   tv.tv_nsec += abstime->tv_nsec;
+   if (tv.tv_nsec >= 1000000000) {
+      ++tv.tv_sec;
+      tv.tv_nsec -= 1000000000;
+   }
+   return bionic_pthread_cond_timedwait(cond, mutex, &tv);
 }
