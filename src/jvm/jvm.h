@@ -80,3 +80,6 @@ jvm_release(struct jvm *jvm);
 
 void
 jvm_init(struct jvm *jvm);
+
+struct jvm*
+jnienv_get_jvm(JNIEnv *env);

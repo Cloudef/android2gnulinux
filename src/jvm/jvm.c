@@ -293,7 +293,7 @@ jvm_get_object_of_type(struct jvm *jvm, const jobject o, const enum jvm_object_t
    return obj;
 }
 
-static struct jvm*
+struct jvm*
 jnienv_get_jvm(JNIEnv *env)
 {
    return container_of(env, struct jvm, env);

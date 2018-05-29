@@ -1,5 +1,5 @@
 #include <stdarg.h>
-#include <stdio.h>
+#include <stddef.h>
 #include <assert.h>
 #include "jvm/jni.h"
 
@@ -54,14 +54,29 @@ jstring
 android_content_Context_getPackageName(JNIEnv *env, jobject object, va_list args)
 {
    assert(env && object);
+#if WOLF
+   return (*env)->NewStringUTF(env, "com.swiftappskom.thewolfrpg");
+#else
    return (*env)->NewStringUTF(env, "com.miHoYo.bh3oversea");
+#endif
 }
 
 jstring
 android_content_Context_getPackageCodePath(JNIEnv *env, jobject object, va_list args)
 {
    assert(env && object);
+#if WOLF
+   return (*env)->NewStringUTF(env, "/mnt/media/dev/android2gnulinux/apks/wolf");
+#else
    return (*env)->NewStringUTF(env, "/mnt/media/dev/android2gnulinux/apks/honkai");
+#endif
+}
+
+jstring
+android_content_pm_PackageInfo_versionName(JNIEnv *env, jobject object)
+{
+   assert(env && object);
+   return (*env)->NewStringUTF(env, "1.1");
 }
 
 jobject
@@ -98,4 +113,42 @@ android_content_Context_getExternalCacheDir(JNIEnv *env, jobject object, va_list
    assert(env && object);
    static jobject sv;
    return (sv ? sv : (sv = (*env)->AllocObject(env, (*env)->FindClass(env, "java/io/File"))));
+}
+
+jstring
+android_net_Uri_decode(JNIEnv *env, jobject object, va_list args)
+{
+   assert(env && object);
+   jstring str = va_arg(args, jstring);
+   (*env)->GetStringUTFChars(env, str, NULL);
+   return str;
+}
+
+jstring
+android_net_Uri_encode(JNIEnv *env, jobject object, va_list args)
+{
+   assert(env && object);
+   jstring str = va_arg(args, jstring);
+   (*env)->GetStringUTFChars(env, str, NULL);
+   return str;
+}
+
+jstring
+android_content_SharedPreferences_getString(JNIEnv *env, jobject object, va_list args)
+{
+   assert(env && object);
+   jstring str1 = va_arg(args, jstring);
+   jstring str2 = va_arg(args, jstring);
+   (*env)->GetStringUTFChars(env, str1, NULL);
+   (*env)->GetStringUTFChars(env, str2, NULL);
+   return str2;
+}
+
+jstring
+android_os_Bundle_getString(JNIEnv *env, jobject object, va_list args)
+{
+   assert(env && object);
+   jstring str1 = va_arg(args, jstring);
+   (*env)->GetStringUTFChars(env, str1, NULL);
+   return NULL;
 }
