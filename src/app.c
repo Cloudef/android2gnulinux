@@ -8,9 +8,6 @@
 #include "linker/dlfcn.h"
 #include "jvm/jvm.h"
 
-jstring
-android_content_Context_getPackageCodePath(JNIEnv *env, jobject object, va_list args);
-
 int
 main(int argc, const char *argv[])
 {
