@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <signal.h>
+#include <limits.h>
 #include <math.h>
 #include <dirent.h>
 #include <assert.h>
@@ -23,14 +24,15 @@ struct bionic_dirent {
 };
 
 #ifdef ANDROID_X86_LINKER
+typedef unsigned long bionic_sigset_t;
 struct bionic_sigaction {
    union {
-      __sighandler_t _sa_handler;
-      void(* _sa_sigaction) (int, siginfo_t *, void *);
-   } _u;
-   sigset_t sa_mask;
+      void (*bsa_handler)(int);
+      void (*bsa_sigaction)(int, void*, void*);
+   };
+   bionic_sigset_t sa_mask;
    int sa_flags;
-   void(* sa_restorer) (void);
+   void (*sa_restorer)(void);
 };
 #else
 #  error "not implemented for this platform"
@@ -160,29 +162,69 @@ bionic_readdir_r(DIR *dirp, struct bionic_dirent *entry, struct bionic_dirent **
    return 0;
 }
 
+// Need to wrap bunch of signal crap
+// https://android.googlesource.com/platform/bionic/+/master/docs/32-bit-abi.md
+
+int
+bionic_sigaddset(const bionic_sigset_t *set, int sig)
+{
+   int bit = sig - 1; // Signal numbers start at 1, but bit positions start at 0.
+   unsigned long *local_set = (unsigned long*)set;
+   if (!set || bit < 0 || bit >= (int)(8 * sizeof(*set))) {
+      errno = EINVAL;
+      return -1;
+   }
+   local_set[bit / LONG_BIT] |= 1UL << (bit % LONG_BIT);
+   return 0;
+}
+
+int
+bionic_sigismember(const bionic_sigset_t *set, int sig)
+{
+   int bit = sig - 1; // Signal numbers start at 1, but bit positions start at 0.
+   const unsigned long *local_set = (const unsigned long*)set;
+   if (!set || bit < 0 || bit >= (int)(8 * sizeof(*set))) {
+      errno = EINVAL;
+      return -1;
+   }
+   return (int)((local_set[bit / LONG_BIT] >> (bit % LONG_BIT)) & 1);
+}
+
 int
 bionic_sigaction(int sig, const struct bionic_sigaction *restrict act, struct bionic_sigaction *restrict oact)
 {
    verbose("%d, %p, %p", sig, (void*)act, (void*)oact);
 
-   if (!act)
-      return 0;
-
    struct sigaction goact = {0}, gact = {0};
    if (act) {
-      gact.sa_handler = act->_u._sa_handler;
-      gact.sa_mask = act->sa_mask;
+      gact.sa_handler = act->bsa_handler;
       gact.sa_flags = act->sa_flags;
       gact.sa_restorer = act->sa_restorer;
+
+      // delete reserved signals
+      // 32 (__SIGRTMIN + 0)        POSIX timers
+      // 33 (__SIGRTMIN + 1)        libbacktrace
+      // 34 (__SIGRTMIN + 2)        libcore
+      // 35 (__SIGRTMIN + 3)        debuggerd -b
+      assert(35 < SIGRTMAX);
+      for (int signo = 35; signo < SIGRTMAX; ++signo) {
+         if (bionic_sigismember(&act->sa_mask, signo))
+            sigaddset(&gact.sa_mask, signo);
+      }
    }
 
    const int ret = sigaction(sig, (act ? &gact : NULL), (oact ? &goact : NULL));
 
    if (oact) {
-      oact->_u._sa_handler = goact.sa_handler;
-      oact->sa_mask = goact.sa_mask;
+      *oact = (struct bionic_sigaction){0};
+      oact->bsa_handler = goact.sa_handler;
       oact->sa_flags = goact.sa_flags;
       oact->sa_restorer = goact.sa_restorer;
+
+      for (int signo = SIGRTMIN + 3; signo < SIGRTMAX; ++signo) {
+         if (sigismember(&goact.sa_mask, signo))
+            bionic_sigaddset(&oact->sa_mask, signo);
+      }
    }
 
    return ret;
