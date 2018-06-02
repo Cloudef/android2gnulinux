@@ -308,12 +308,15 @@ javavm_get_jvm(JavaVM *vm)
 static jint
 JNIEnv_GetVersion(JNIEnv * p0)
 {
+   assert(p0);
    return 0;
 }
 
 static jclass
 JNIEnv_DefineClass(JNIEnv* p0, const char* p1, jobject p2, const jbyte* p3, jsize p4)
 {
+   assert(p0 && p1 && p2);
+   verbose("FIXME: unimplemented");
    return NULL;
 }
 
@@ -352,6 +355,7 @@ JNIEnv_FindClass(JNIEnv* p0, const char* p1)
 static jmethodID
 JNIEnv_FromReflectedMethod(JNIEnv* p0, jobject p1)
 {
+   assert(p0 && p1);
    jvm_object_print(jnienv_get_jvm(p0), jvm_get_object(jnienv_get_jvm(p0), p1));
    return p1;
 }
@@ -359,6 +363,7 @@ JNIEnv_FromReflectedMethod(JNIEnv* p0, jobject p1)
 static jfieldID
 JNIEnv_FromReflectedField(JNIEnv* p0, jobject p1)
 {
+   assert(p0 && p1);
    jvm_object_print(jnienv_get_jvm(p0), jvm_get_object(jnienv_get_jvm(p0), p1));
    return p1;
 }
@@ -366,75 +371,93 @@ JNIEnv_FromReflectedField(JNIEnv* p0, jobject p1)
 static jobject
 JNIEnv_ToReflectedMethod(JNIEnv* p0, jclass p1, jmethodID p2, jboolean p3)
 {
+   assert(p0 && p1 && p2);
+   verbose("FIXME: unimplemented");
    return NULL;
 }
 
 static jclass
 JNIEnv_GetSuperclass(JNIEnv* p0, jclass p1)
 {
+   assert(p0 && p1);
+   verbose("FIXME: unimplemented");
    return NULL;
 }
 
 static jboolean
 JNIEnv_IsAssignableFrom(JNIEnv* p0, jclass p1, jclass p2)
 {
+   assert(p0 && p1 && p2);
+   verbose("FIXME: unimplemented");
    return 0;
 }
 
 static jobject
 JNIEnv_ToReflectedField(JNIEnv* p0, jclass p1, jfieldID p2, jboolean p3)
 {
+   assert(p0 && p1 && p2);
+   verbose("FIXME: unimplemented");
    return NULL;
 }
 
 static jint
 JNIEnv_Throw(JNIEnv* p0, jthrowable p1)
 {
+   assert(p0 && p1);
    return 0;
 }
 
 static jint
-JNIEnv_ThrowNew(JNIEnv * p0, jclass p1, const char * p2)
+JNIEnv_ThrowNew(JNIEnv* p0, jclass p1, const char* p2)
 {
+   assert(p0 && p1 && p2);
    return 0;
 }
 
 static jthrowable
 JNIEnv_ExceptionOccurred(JNIEnv* p0)
 {
+   assert(p0);
    return NULL;
 }
 
 static void
 JNIEnv_ExceptionDescribe(JNIEnv* p0)
 {
+   assert(p0);
 }
 
 static void
 JNIEnv_ExceptionClear(JNIEnv* p0)
 {
+   assert(p0);
 }
 
 static void
 JNIEnv_FatalError(JNIEnv* p0, const char* p1)
 {
+   assert(p0 && p1);
+   verbose("FatalError: %s", p1);
 }
 
 static jint
 JNIEnv_PushLocalFrame(JNIEnv* p0, jint p1)
 {
+   assert(p0);
    return 0;
 }
 
 static jobject
 JNIEnv_PopLocalFrame(JNIEnv* p0, jobject p1)
 {
+   assert(p0);
    return NULL;
 }
 
 static jobject
 JNIEnv_NewGlobalRef(JNIEnv* p0, jobject p1)
 {
+   assert(p0 && p1);
    // FIXME: add ref counting
    jvm_object_print(jnienv_get_jvm(p0), jvm_get_object(jnienv_get_jvm(p0), p1));
    return p1;
@@ -443,32 +466,37 @@ JNIEnv_NewGlobalRef(JNIEnv* p0, jobject p1)
 static void
 JNIEnv_DeleteGlobalRef(JNIEnv* p0, jobject p1)
 {
+   assert(p0);
    jvm_object_print(jnienv_get_jvm(p0), jvm_get_object(jnienv_get_jvm(p0), p1));
 }
 
 static void
 JNIEnv_DeleteLocalRef(JNIEnv* p0, jobject p1)
 {
+   assert(p0);
    jvm_object_print(jnienv_get_jvm(p0), jvm_get_object(jnienv_get_jvm(p0), p1));
 }
 
 static jboolean
 JNIEnv_IsSameObject(JNIEnv* p0, jobject p1, jobject p2)
 {
+   assert(p0);
    return (p1 == p2);
 }
 
 static jobject
 JNIEnv_NewLocalRef(JNIEnv* p0, jobject p1)
 {
+   assert(p0 && p1);
    // FIXME: add ref counting
    jvm_object_print(jnienv_get_jvm(p0), jvm_get_object(jnienv_get_jvm(p0), p1));
-   return NULL;
+   return p1;
 }
 
 static jint
 JNIEnv_EnsureLocalCapacity(JNIEnv* p0, jint p1)
 {
+   assert(p0);
    return 0;
 }
 
@@ -792,18 +820,23 @@ JNIEnv_NewString(JNIEnv* p0, const jchar* p1, jsize p2)
 static jsize
 JNIEnv_GetStringLength(JNIEnv* p0, jstring p1)
 {
+   assert(p0 && p1);
+   verbose("FIXME: unimplemented");
    return 0;
 }
 
 const jchar*
 JNIEnv_GetStringChars(JNIEnv* p0, jstring p1, jboolean* p2)
 {
+   assert(p0 && p1);
+   verbose("FIXME: unimplemented");
    return NULL;
 }
 
 static void
 JNIEnv_ReleaseStringChars(JNIEnv* p0, jstring p1, const jchar* p2)
 {
+   assert(p0 && p1);
 }
 
 static jstring
@@ -909,6 +942,8 @@ jvm_get_array_elements(struct jvm *jvm, jobject array, jboolean *is_copy)
 static jobject
 JNIEnv_GetObjectArrayElement(JNIEnv* p0, jobjectArray p1, jsize p2)
 {
+   assert(p0 && p1);
+
    const struct jvm_object *obj = jvm_get_object_of_type(jnienv_get_jvm(p0), p1, JVM_OBJECT_ARRAY);
    if (!obj || obj->array.size <= (size_t)p2)
       return NULL;
@@ -919,6 +954,8 @@ JNIEnv_GetObjectArrayElement(JNIEnv* p0, jobjectArray p1, jsize p2)
 static void
 JNIEnv_SetObjectArrayElement(JNIEnv* p0, jobjectArray p1, jsize p2, jobject p3)
 {
+   assert(p0 && p1);
+
    const struct jvm_object *obj = jvm_get_object_of_type(jnienv_get_jvm(p0), p1, JVM_OBJECT_ARRAY);
    if (!obj || obj->array.size <= (size_t)p2)
       return;
@@ -977,46 +1014,49 @@ JNIEnv_GetDoubleArrayElements(JNIEnv* p0, jdoubleArray p1, jboolean* p2)
 static void
 JNIEnv_ReleaseBooleanArrayElements(JNIEnv* p0, jbooleanArray p1, jboolean* p2, jint p3)
 {
+   assert(p0 && p1);
 }
 
 static void
 JNIEnv_ReleaseByteArrayElements(JNIEnv* p0, jbyteArray p1, jbyte* p2, jint p3)
 {
+   assert(p0 && p1);
 }
 
 static void
 JNIEnv_ReleaseCharArrayElements(JNIEnv* p0, jcharArray p1, jchar* p2, jint p3)
 {
+   assert(p0 && p1);
 }
 
 static void
 JNIEnv_ReleaseShortArrayElements(JNIEnv* p0, jshortArray p1, jshort* p2, jint p3)
 {
+   assert(p0 && p1);
 }
 
 static void
 JNIEnv_ReleaseIntArrayElements(JNIEnv* p0, jintArray p1, jint* p2, jint p3)
 {
+   assert(p0 && p1);
 }
 
 static void
 JNIEnv_ReleaseLongArrayElements(JNIEnv* p0, jlongArray p1, jlong* p2, jint p3)
 {
+   assert(p0 && p1);
 }
 
 static void
 JNIEnv_ReleaseFloatArrayElements(JNIEnv* p0, jfloatArray p1, jfloat* p2, jint p3)
 {
+   assert(p0 && p1);
 }
 
 static void
 JNIEnv_ReleaseDoubleArrayElements(JNIEnv* p0, jdoubleArray p1, jdouble* p2, jint p3)
 {
-}
-
-static void
-JNIEnv_GetBooleanArrayRegion(JNIEnv* p0, jbooleanArray p1, jsize p2, jsize p3, jboolean* p4)
-{
+   assert(p0 && p1);
 }
 
 static void
@@ -1026,6 +1066,12 @@ jvm_get_array_region(struct jvm *jvm, jobject obj, const size_t offset, const si
    const struct jvm_array *array = &jvm_get_object_of_type(jvm, obj, JVM_OBJECT_ARRAY)->array;
    assert(offset + size <= array->size);
    memcpy(buf, (char*)array->data + offset * array->element_sz, size * array->element_sz);
+}
+
+static void
+JNIEnv_GetBooleanArrayRegion(JNIEnv* p0, jbooleanArray p1, jsize p2, jsize p3, jboolean* p4)
+{
+   jvm_get_array_region(jnienv_get_jvm(p0), p1, p2, p3, p4);
 }
 
 static void
@@ -1167,12 +1213,16 @@ JNIEnv_UnregisterNatives(JNIEnv* p0, jclass p1)
 static jint
 JNIEnv_MonitorEnter(JNIEnv* p0, jobject p1)
 {
+   assert(p0 && p1);
+   verbose("FIXME: unimplemented");
    return 0;
 }
 
 static jint
 JNIEnv_MonitorExit(JNIEnv* p0, jobject p1)
 {
+   assert(p0 && p1);
+   verbose("FIXME: unimplemented");
    return 0;
 }
 
@@ -1188,67 +1238,87 @@ JNIEnv_GetJavaVM(JNIEnv* env, JavaVM** vm)
 static void
 JNIEnv_GetStringRegion(JNIEnv* p0, jstring p1, jsize p2, jsize p3, jchar* p4)
 {
+   assert(p0 && p1);
+   verbose("FIXME: unimplemented");
 }
 
 static void
 JNIEnv_GetStringUTFRegion(JNIEnv* p0, jstring p1, jsize p2, jsize p3, char* p4)
 {
+   assert(p0 && p1);
+   verbose("FIXME: unimplemented");
 }
 
 static void*
 JNIEnv_GetPrimitiveArrayCritical(JNIEnv *env, jarray array, jboolean *isCopy)
 {
+   assert(env && array);
    return jvm_get_array_elements(jnienv_get_jvm(env), array, isCopy);
 }
 
 static void
 JNIEnv_ReleasePrimitiveArrayCritical(JNIEnv *env, jarray array, void *carray, jint mode)
 {
+   assert(env && array);
 }
 
 const jchar*
 JNIEnv_GetStringCritical(JNIEnv* p0, jstring p1, jboolean* p2)
 {
+   assert(p0 && p1);
+   verbose("FIXME: unimplemented");
    return NULL;
 }
 
 static void
 JNIEnv_ReleaseStringCritical(JNIEnv* p0, jstring p1, const jchar* p2)
 {
+   assert(p0 && p1);
 }
 
 static jweak
 JNIEnv_NewWeakGlobalRef(JNIEnv* p0, jobject p1)
 {
+   assert(p0 && p1);
+   verbose("FIXME: unimplemented");
    return NULL;
 }
 
 static void
 JNIEnv_DeleteWeakGlobalRef(JNIEnv* p0, jweak p1)
 {
+   assert(p0 && p1);
+   verbose("FIXME: unimplemented");
 }
 
 static jboolean
 JNIEnv_ExceptionCheck(JNIEnv* p0)
 {
+   assert(p0);
    return 0;
 }
 
 static jobject
 JNIEnv_NewDirectByteBuffer(JNIEnv* p0, void* p1, jlong p2)
 {
+   assert(p0 && p1);
+   verbose("FIXME: unimplemented");
    return NULL;
 }
 
 static void*
 JNIEnv_GetDirectBufferAddress(JNIEnv* p0, jobject p1)
 {
+   assert(p0 && p1);
+   verbose("FIXME: unimplemented");
    return NULL;
 }
 
 static jlong
 JNIEnv_GetDirectBufferCapacity(JNIEnv* p0, jobject p1)
 {
+   assert(p0 && p1);
+   verbose("FIXME: unimplemented");
    return 0;
 }
 
