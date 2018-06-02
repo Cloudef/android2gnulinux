@@ -72,7 +72,14 @@ tkill(int tid, int sig)
 // Stuff needed for runtime compatibility, but not neccessary for linking
 // Also stuff that exists in glibc, but needs to be wrapped for runtime compatibility
 
-#include "libc-stdio.h"
+// Some defines from app-stdio.c as per GNU linker's manual for --wrap:
+//    You may wish to provide a __real_malloc function as well, so that links without the
+//    --wrap option will succeed. If you do this, you should not put the definition of
+//    __real_malloc in the same file as __wrap_malloc; if you do, the assembler may resolve
+//    the call before the linker has a chance to wrap it to malloc.
+
+size_t __real_IO_file_xsputn(FILE *f, const void *buf, size_t n) {}
+
 #include "libc-ctype.h"
 
 const unsigned int bionic___page_size = PAGE_SIZE;

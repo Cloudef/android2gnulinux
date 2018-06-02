@@ -34,9 +34,10 @@ runtime/libdl.so: private override CPPFLAGS += -D_GNU_SOURCE -DLINKER_DEBUG=1
 runtime/libdl.so: private override CFLAGS += -Wno-pedantic -Wno-variadic-macros -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast
 runtime/libdl.so: wrapper.a src/linker/dlfcn.c src/linker/linker.c src/linker/linker_environ.c src/linker/rt.c src/linker/strlcpy.c
 runtime/libc.so: private override CPPFLAGS += -D_GNU_SOURCE
+runtime/libc.so: private override LDFLAGS += -Wl,-wrap,_IO_file_xsputn
 runtime/libc.so: private override CFLAGS += -Wno-deprecated-declarations
 runtime/libc.so: private override LDLIBS += `pkg-config --libs libbsd libunwind`
-runtime/libc.so: verbose src/libc.c
+runtime/libc.so: verbose src/libc.c src/libc-stdio.c
 runtime/libpthread.so: private override CPPFLAGS += -D_GNU_SOURCE
 runtime/libpthread.so: private override LDLIBS += -lpthread
 runtime/libpthread.so: src/libpthread.c
