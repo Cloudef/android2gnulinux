@@ -39,7 +39,7 @@ main(int argc, const char *argv[])
 
       JNI_OnLoad(&jvm.vm, NULL);
 
-      static const char *unity_player_class = "com/unity3d/player/UnityPlayer";
+      static const char *unity_player_class = "com.unity3d.player.UnityPlayer";
       void (*native_init_jni)(JNIEnv*, jobject, jobject) = jvm_get_native_method(&jvm, unity_player_class, "initJni");
       void (*native_done)(JNIEnv*, jobject) = jvm_get_native_method(&jvm, unity_player_class, "nativeDone");
       void (*native_file)(JNIEnv*, jobject, jstring) = jvm_get_native_method(&jvm, unity_player_class, "nativeFile");

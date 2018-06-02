@@ -320,18 +320,13 @@ JNIEnv_DefineClass(JNIEnv* p0, const char* p1, jobject p2, const jbyte* p3, jsiz
    return NULL;
 }
 
-static char*
-cstr_replace(char *cstr, const char replace, const char with)
+static void
+cstr_replace(char *cstr, const char *replace, const char with)
 {
-   assert(cstr && replace != with);
-
-   if (replace == with)
-      return cstr;
-
+   assert(cstr && replace);
    char *s = cstr;
-   while ((s = strchr(s, replace)))
-      *s = with;
-   return cstr;
+   for (size_t i; *s && (i = strcspn(s, replace)) && s[i]; s += (i + 1))
+      s[i] = with;
 }
 
 static jclass
@@ -340,7 +335,7 @@ jvm_make_class(struct jvm *jvm, const char *name)
    assert(jvm && name);
    struct jvm_object o = { .this_klass = (jclass)1, .type = JVM_OBJECT_CLASS };
    jvm_string_set_cstr(&o.klass.name, name, true);
-   cstr_replace((char*)o.klass.name.data, '.', '/');
+   cstr_replace((char*)o.klass.name.data, "/", '.');
    return jvm_add_object_if_not_there(jvm, &o);
 }
 
@@ -558,8 +553,7 @@ jvm_form_symbol(struct jvm *jvm, const struct jvm_method *method, char *symbol, 
    assert(jvm && method);
    verbose("%s::%s::%s", jvm_get_object_of_type(jvm, method->klass, JVM_OBJECT_CLASS)->klass.name.data, method->name.data, method->signature.data);
    snprintf(symbol, symbol_sz, "%s_%s", jvm_get_object_of_type(jvm, method->klass, JVM_OBJECT_CLASS)->klass.name.data, method->name.data);
-   cstr_replace(symbol, '/', '_');
-   cstr_replace(symbol, '$', '_');
+   cstr_replace(symbol, "./$", '_');
 }
 
 static void*
