@@ -43,18 +43,18 @@ main(int argc, const char *argv[])
       void (*native_init_jni)(JNIEnv*, jobject, jobject) = jvm_get_native_method(&jvm, unity_player_class, "initJni");
       void (*native_done)(JNIEnv*, jobject) = jvm_get_native_method(&jvm, unity_player_class, "nativeDone");
       void (*native_file)(JNIEnv*, jobject, jstring) = jvm_get_native_method(&jvm, unity_player_class, "nativeFile");
-      jboolean (*native_pause)(JNIEnv*, jobject) = jvm_get_native_method(&jvm, unity_player_class, "nativePause");
+      // jboolean (*native_pause)(JNIEnv*, jobject) = jvm_get_native_method(&jvm, unity_player_class, "nativePause");
       void (*native_recreate_gfx_state)(JNIEnv*, jobject, jint, jobject) = jvm_get_native_method(&jvm, unity_player_class, "nativeRecreateGfxState");
       jboolean (*native_render)(JNIEnv*, jobject) = jvm_get_native_method(&jvm, unity_player_class, "nativeRender");
       void (*native_resume)(JNIEnv*, jobject) = jvm_get_native_method(&jvm, unity_player_class, "nativeResume");
       void (*native_focus_changed)(JNIEnv*, jobject, jboolean) = jvm_get_native_method(&jvm, unity_player_class, "nativeFocusChanged");
-      void (*native_set_input_string)(JNIEnv*, jobject, jstring) = jvm_get_native_method(&jvm, unity_player_class, "nativeSetInputString");
-      void (*native_soft_input_closed)(JNIEnv*, jobject) = jvm_get_native_method(&jvm, unity_player_class, "nativeSoftInputClosed");
-      void (*native_set_input_canceled)(JNIEnv*, jobject, jboolean) = jvm_get_native_method(&jvm, unity_player_class, "nativeSetInputCanceled");
+      // void (*native_set_input_string)(JNIEnv*, jobject, jstring) = jvm_get_native_method(&jvm, unity_player_class, "nativeSetInputString");
+      // void (*native_soft_input_closed)(JNIEnv*, jobject) = jvm_get_native_method(&jvm, unity_player_class, "nativeSoftInputClosed");
+      // void (*native_set_input_canceled)(JNIEnv*, jobject, jboolean) = jvm_get_native_method(&jvm, unity_player_class, "nativeSetInputCanceled");
       void (*native_init_www)(JNIEnv*, jobject, jobject) = jvm_get_native_method(&jvm, unity_player_class, "nativeInitWWW");
       void (*native_init_web_request)(JNIEnv*, jobject, jobject) = jvm_get_native_method(&jvm, unity_player_class, "nativeInitWebRequest");
-      void (*native_add_vsync_time)(JNIEnv*, jobject, jlong) = jvm_get_native_method(&jvm, unity_player_class, "nativeAddVSyncTime");
-      void (*native_forward_events_to_dalvik)(JNIEnv*, jobject, jboolean) = jvm_get_native_method(&jvm, unity_player_class, "nativeForwardEventsToDalvik");
+      // void (*native_add_vsync_time)(JNIEnv*, jobject, jlong) = jvm_get_native_method(&jvm, unity_player_class, "nativeAddVSyncTime");
+      // void (*native_forward_events_to_dalvik)(JNIEnv*, jobject, jboolean) = jvm_get_native_method(&jvm, unity_player_class, "nativeForwardEventsToDalvik");
       native_init_jni(&jvm.env, context, context);
 #if WOLF
       native_file(&jvm.env, context, jvm.env->NewStringUTF(&jvm.env, "/mnt/media/dev/android2gnulinux/apks/wolf.apk"));
