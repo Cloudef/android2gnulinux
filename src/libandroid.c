@@ -10,6 +10,9 @@
 
 #include "jvm/jni.h"
 
+// https://android.googlesource.com/platform/bionic/+/master/docs/32-bit-abi.md
+typedef uint32_t bionic_off_t;
+
 // System
 
 #define PROP_NAME_MAX   32
@@ -21,13 +24,58 @@ __system_property_get(const char *name, char *value)
    return 0;
 }
 
-// AConfiguration
+// AAsset
 
-struct AConfiguration {
+struct AAsset {
    char nop;
 };
 
+void
+AAsset_close(struct AAsset *asset)
+{
+   free(asset);
+}
+
+bionic_off_t
+AAsset_getLength(struct AAsset *asset)
+{
+    return 0;
+}
+
+bionic_off_t
+AAsset_seek(struct AAsset *asset, bionic_off_t offset, int whence)
+{
+   return 0;
+}
+
+
+int
+AAsset_read(struct AAsset *asset, void *buf, size_t count)
+{
+   return 0;
+}
+
+// AAssetManager
+
 struct AAssetManager {
+   char nop;
+};
+
+struct AAssetManager*
+AAssetManager_fromJava(JNIEnv *env, jobject assetManager)
+{
+   return calloc(1, sizeof(struct AAssetManager));
+}
+
+struct AAsset*
+AAssetManager_open(struct AAssetManager *amgr, const char *filename, int mode)
+{
+   return calloc(1, sizeof(struct AAsset));
+}
+
+// AConfiguration
+
+struct AConfiguration {
    char nop;
 };
 
