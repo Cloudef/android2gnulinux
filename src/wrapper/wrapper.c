@@ -21,12 +21,12 @@ verbose_log(const char *fmt, ...)
 
    static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
    pthread_mutex_lock(&mutex);
-   fprintf(stderr, "%lu: ", pthread_self());
    va_list ap;
    va_start(ap, fmt);
-   vfprintf(stderr, fmt, ap);
+   char buf[1024];
+   vsnprintf(buf, sizeof(buf), fmt, ap);
    va_end(ap);
-   fputc('\n', stderr);
+   fprintf(stderr, "%lu: %s\n", pthread_self(), buf);
    pthread_mutex_unlock(&mutex);
 }
 
