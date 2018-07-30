@@ -132,6 +132,15 @@ bionic_sem_destroy(bionic_sem_t *sem)
    return ret;
 }
 
+static void
+default_sem_init(bionic_sem_t *sem)
+{
+   // Apparently some android apps (hearthstone) do not call sem_init()
+   assert(sem);
+   sem->glibc = mmap(NULL, sizeof(*sem->glibc), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+   memset(sem->glibc, 0, sizeof(*sem->glibc));
+}
+
 int
 bionic_sem_init(bionic_sem_t *sem, int pshared, unsigned int value)
 {
@@ -146,28 +155,32 @@ bionic_sem_init(bionic_sem_t *sem, int pshared, unsigned int value)
 int
 bionic_sem_post(bionic_sem_t *sem)
 {
-   assert(sem && IS_MAPPED(sem));
+   assert(sem);
+   INIT_IF_NOT_MAPPED(sem, default_sem_init);
    return sem_post(sem->glibc);
 }
 
 int
 bionic_sem_wait(bionic_sem_t *sem)
 {
-   assert(sem && IS_MAPPED(sem));
+   assert(sem);
+   INIT_IF_NOT_MAPPED(sem, default_sem_init);
    return sem_wait(sem->glibc);
 }
 
 int
 bionic_sem_trywait(bionic_sem_t *sem)
 {
-   assert(sem && IS_MAPPED(sem));
+   assert(sem);
+   INIT_IF_NOT_MAPPED(sem, default_sem_init);
    return sem_trywait(sem->glibc);
 }
 
 int
 bionic_sem_timedwait(bionic_sem_t *sem, const struct timespec *abs_timeout)
 {
-   assert(sem && IS_MAPPED(sem) && abs_timeout);
+   assert(sem && abs_timeout);
+   INIT_IF_NOT_MAPPED(sem, default_sem_init);
    return sem_timedwait(sem->glibc, abs_timeout);
 }
 
