@@ -28,6 +28,12 @@ bionic_file_to_glibc_file(FILE *f)
    return f;
 }
 
+int
+bionic_fflush(FILE *f)
+{
+   return fflush(bionic_file_to_glibc_file(f));
+}
+
 // Wrapping internal glibc VTABLE functions to handle bionic's pre-M crap
 // We define __real_IO_file_xsputn in libc.c so linker will link our library,
 // it's not used however for anything.
