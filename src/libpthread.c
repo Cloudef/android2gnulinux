@@ -90,6 +90,15 @@ _Static_assert(sizeof(bionic_once_t) == sizeof(pthread_once_t), "bionic_once_t a
 typedef long bionic_pthread_t;
 _Static_assert(sizeof(bionic_pthread_t) == sizeof(pthread_t), "bionic_pthread_t and pthread_t size mismatch");
 
+struct bionic_pthread_cleanup_t {
+   union {
+      struct bionic_pthread_cleanup_t *prev;
+      __pthread_unwind_buf_t *glibc;
+   };
+   void (*routine)(void*);
+   void *arg;
+};
+
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 
 // For checking, if our glibc version is mapped to memory.
@@ -109,15 +118,32 @@ is_mapped(void *mem, const size_t sz)
 }
 
 void
-bionic___pthread_cleanup_push(void *c, void *routine, void *arg)
+bionic___pthread_cleanup_push(struct bionic_pthread_cleanup_t *c, void (*routine)(void*), void *arg)
 {
-   assert(0 && "implement");
+   assert(c && routine);
+   c->glibc = mmap(NULL, sizeof(*c->glibc), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+   c->routine = routine;
+   c->arg = arg;
+
+   int not_first_call;
+   if ((not_first_call = __sigsetjmp((struct __jmp_buf_tag*)(void*)c->glibc->__cancel_jmp_buf, 0))) {
+      routine(arg);
+      __pthread_unwind_next(c->glibc);
+   }
+
+   __pthread_register_cancel(c->glibc);
 }
 
 void
-bionic___pthread_cleanup_pop(void *c, int execute)
+bionic___pthread_cleanup_pop(struct bionic_pthread_cleanup_t *c, int execute)
 {
-   assert(0 && "implement");
+   assert(c && IS_MAPPED(c));
+   __pthread_unregister_cancel(c->glibc);
+
+   if (execute)
+      c->routine(c->arg);
+
+   munmap(c->glibc, sizeof(*c->glibc));
 }
 
 int
