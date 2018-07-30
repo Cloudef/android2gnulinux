@@ -47,7 +47,9 @@ runtime/liblog.so: src/liblog.c
 runtime/libEGL.so: private override CPPFLAGS += -D_GNU_SOURCE
 runtime/libEGL.so: private override LDLIBS += -lEGL `pkg-config --libs glfw3`
 runtime/libEGL.so: src/libEGL.c
-native: runtime/libdl.so runtime/libc.so runtime/libpthread.so runtime/libandroid.so runtime/liblog.so runtime/libEGL.so
+runtime/libOpenSLES.so: private override CFLAGS += -Wno-pedantic
+runtime/libOpenSLES.so: wrapper.a src/libOpenSLES.c
+native: runtime/libdl.so runtime/libc.so runtime/libpthread.so runtime/libandroid.so runtime/liblog.so runtime/libEGL.so runtime/libOpenSLES.so
 
 jvm.a: private override CPPFLAGS += -D_GNU_SOURCE
 jvm.a: private override CFLAGS += -Wno-unused-variable -Wno-pedantic
