@@ -202,6 +202,10 @@ bionic_sigaction(int sig, const struct bionic_sigaction *restrict act, struct bi
 {
    verbose("%d, %p, %p", sig, (void*)act, (void*)oact);
 
+   // THREAD_SIGNAL on android used by libbacktrace
+   if (sig == 33)
+      sig = SIGRTMIN;
+
    struct sigaction goact = {0}, gact = {0};
    if (act) {
       gact.sa_handler = act->bsa_handler;
