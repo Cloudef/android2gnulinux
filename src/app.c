@@ -59,6 +59,14 @@ main(int argc, const char *argv[])
       native_init_jni(&jvm.env, context, context);
 #if WOLF
       native_file(&jvm.env, context, jvm.env->NewStringUTF(&jvm.env, "/mnt/media/dev/android2gnulinux/apks/wolf.apk"));
+#elif STARLIGHT
+      native_file(&jvm.env, context, jvm.env->NewStringUTF(&jvm.env, "/mnt/media/dev/android2gnulinux/apks/starlight.apk"));
+#elif SHADOWVERSE
+      native_file(&jvm.env, context, jvm.env->NewStringUTF(&jvm.env, "/mnt/media/dev/android2gnulinux/apks/shadowverse.apk"));
+#elif HEARTHSTONE
+      native_file(&jvm.env, context, jvm.env->NewStringUTF(&jvm.env, "/mnt/media/dev/android2gnulinux/apks/hearthstone.apk"));
+      native_file(&jvm.env, context, jvm.env->NewStringUTF(&jvm.env, "/mnt/media/dev/android2gnulinux/local/obb/com.blizzard.wtcg.hearthstone/patch.1561502.com.blizzard.wtcg.hearthstone.obb"));
+      native_file(&jvm.env, context, jvm.env->NewStringUTF(&jvm.env, "/mnt/media/dev/android2gnulinux/local/obb/com.blizzard.wtcg.hearthstone/main.1561502.com.blizzard.wtcg.hearthstone.obb"));
 #else
       native_file(&jvm.env, context, jvm.env->NewStringUTF(&jvm.env, "/mnt/media/dev/android2gnulinux/apks/honkai.apk"));
       native_file(&jvm.env, context, jvm.env->NewStringUTF(&jvm.env, "/mnt/media/dev/android2gnulinux/local/obb/com.miHoYo.bh3oversea/main.100.com.miHoYo.bh3oversea.obb"));

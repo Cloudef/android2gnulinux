@@ -56,6 +56,12 @@ android_content_Context_getPackageName(JNIEnv *env, jobject object, va_list args
    assert(env && object);
 #if WOLF
    return (*env)->NewStringUTF(env, "com.swiftappskom.thewolfrpg");
+#elif STARLIGHT
+   return (*env)->NewStringUTF(env, "jp.co.bandainamcoent.BNEI0242");
+#elif SHADOWVERSE
+   return (*env)->NewStringUTF(env, "com.cygames.Shadowverse");
+#elif HEARTHSTONE
+   return (*env)->NewStringUTF(env, "com.blizzard.wtcg.hearthstone");
 #else
    return (*env)->NewStringUTF(env, "com.miHoYo.bh3oversea");
 #endif
@@ -67,6 +73,12 @@ android_content_Context_getPackageCodePath(JNIEnv *env, jobject object, va_list 
    assert(env && object);
 #if WOLF
    return (*env)->NewStringUTF(env, "/mnt/media/dev/android2gnulinux/apks/wolf");
+#elif STARLIGHT
+   return (*env)->NewStringUTF(env, "/mnt/media/dev/android2gnulinux/apks/starlight");
+#elif SHADOWVERSE
+   return (*env)->NewStringUTF(env, "/mnt/media/dev/android2gnulinux/apks/shadowverse");
+#elif HEARTHSTONE
+   return (*env)->NewStringUTF(env, "/mnt/media/dev/android2gnulinux/apks/hearthstone");
 #else
    return (*env)->NewStringUTF(env, "/mnt/media/dev/android2gnulinux/apks/honkai");
 #endif

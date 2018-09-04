@@ -66,6 +66,12 @@ java_io_File_getPath(JNIEnv *env, jobject object, va_list args)
    // FIXME: see comment on `android_content_Context_getExternalFilesDir`
 #if WOLF
    return (*env)->NewStringUTF(env, "/mnt/media/dev/android2gnulinux/local/data/com.swiftappskom.thewolfrpg/files");
+#elif STARLIGHT
+   return (*env)->NewStringUTF(env, "/mnt/media/dev/android2gnulinux/local/data/jp.co.bandainamcoent.BNEI0242/files");
+#elif SHADOWVERSE
+   return (*env)->NewStringUTF(env, "/mnt/media/dev/android2gnulinux/local/data/com.cygames.Shadowverse/files");
+#elif HEARTHSTONE
+   return (*env)->NewStringUTF(env, "/mnt/media/dev/android2gnulinux/local/data/com.blizzard.wtcg.hearthstone/files");
 #else
    return (*env)->NewStringUTF(env, "/mnt/media/dev/android2gnulinux/local/data/com.miHoYo.bh3oversea/files");
 #endif
@@ -74,7 +80,17 @@ java_io_File_getPath(JNIEnv *env, jobject object, va_list args)
 jstring
 java_io_File_getParent(JNIEnv *env, jobject object, va_list args)
 {
+#if WOLF
+   return (*env)->NewStringUTF(env, "/mnt/media/dev/android2gnulinux/local/data/com.swiftappskom.thewolfrpg");
+#elif STARLIGHT
+   return (*env)->NewStringUTF(env, "/mnt/media/dev/android2gnulinux/local/data/jp.co.bandainamcoent.BNEI0242");
+#elif SHADOWVERSE
+   return (*env)->NewStringUTF(env, "/mnt/media/dev/android2gnulinux/local/data/com.cygames.Shadowverse");
+#elif HEARTHSTONE
+   return (*env)->NewStringUTF(env, "/mnt/media/dev/android2gnulinux/local/data/com.blizzard.wtcg.hearthstone");
+#else
    return (*env)->NewStringUTF(env, "/mnt/media/dev/android2gnulinux/local/data/com.miHoYo.bh3oversea");
+#endif
 }
 
 jboolean
