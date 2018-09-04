@@ -55,6 +55,7 @@ main(int argc, const char *argv[])
       void (*native_init_web_request)(JNIEnv*, jobject, jobject) = jvm_get_native_method(&jvm, unity_player_class, "nativeInitWebRequest");
       // void (*native_add_vsync_time)(JNIEnv*, jobject, jlong) = jvm_get_native_method(&jvm, unity_player_class, "nativeAddVSyncTime");
       // void (*native_forward_events_to_dalvik)(JNIEnv*, jobject, jboolean) = jvm_get_native_method(&jvm, unity_player_class, "nativeForwardEventsToDalvik");
+      void (*native_inject_event)(JNIEnv*, jobject, jobject) = jvm_get_native_method(&jvm, unity_player_class, "nativeInjectEvent");
       native_init_jni(&jvm.env, context, context);
 #if WOLF
       native_file(&jvm.env, context, jvm.env->NewStringUTF(&jvm.env, "/mnt/media/dev/android2gnulinux/apks/wolf.apk"));
@@ -71,7 +72,14 @@ main(int argc, const char *argv[])
       native_done(&jvm.env, context);
       // native_add_vsync_time(&jvm.env, context, 0);
 
-      while (native_render(&jvm.env, context));
+      while (native_render(&jvm.env, context)) {
+         static int i = 0;
+         if (++i >= 10) {
+            native_inject_event(&jvm.env, context, jvm.native.AllocObject(&jvm.env, jvm.native.FindClass(&jvm.env, "android/view/MotionEvent")));
+            i = 0;
+         }
+      }
+
       printf("unloading module: %s\n", argv[1]);
       bionic_dlclose(handle);
       jvm_release(&jvm);

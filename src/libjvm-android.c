@@ -152,3 +152,46 @@ android_os_Bundle_getString(JNIEnv *env, jobject object, va_list args)
    (*env)->GetStringUTFChars(env, str1, NULL);
    return NULL;
 }
+
+jintArray
+android_view_InputDevice_getDeviceIds(JNIEnv *env, jobject object, va_list args)
+{
+   assert(env && object);
+   return (*env)->NewIntArray(env, 1);
+}
+
+jint
+android_view_InputEvent_getSource(JNIEnv *env, jobject object, va_list args)
+{
+   assert(env && object);
+   return 0x00001002; // SOURCE_TOUCHSCREEN
+}
+
+jint
+android_view_MotionEvent_getAction(JNIEnv *env, jobject object, va_list args)
+{
+   assert(env && object);
+   static int action;
+   return (action = !action);
+}
+
+jfloat
+android_view_MotionEvent_getX(JNIEnv *env, jobject object, va_list args)
+{
+   assert(env && object);
+   return 1024/2;
+}
+
+jfloat
+android_view_MotionEvent_getY(JNIEnv *env, jobject object, va_list args)
+{
+   assert(env && object);
+   return 700;
+}
+
+jint
+android_view_MotionEvent_getPointerCount(JNIEnv *env, jobject object, va_list args)
+{
+   assert(env && object);
+   return 1;
+}
