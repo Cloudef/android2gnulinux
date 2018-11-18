@@ -41,7 +41,7 @@ jint
 android_os_Build_VERSION_SDK_INT(JNIEnv *env, jobject object)
 {
    assert(env && object);
-   return INT_MAX; // Always the latest and greatest, XXX: maybe tunable, as can change app behaviour
+   return 15; // >15 needs android.view.Choreographer to work correctly, XXX: maybe tunable, as can change app behaviour
 }
 
 jstring
