@@ -23,7 +23,7 @@ verbose_log(const char *fmt, ...)
    pthread_mutex_lock(&mutex);
    va_list ap;
    va_start(ap, fmt);
-   char buf[1024];
+   static char buf[1024];
    vsnprintf(buf, sizeof(buf), fmt, ap);
    va_end(ap);
    fprintf(stderr, "%lu: %s\n", pthread_self(), buf);
