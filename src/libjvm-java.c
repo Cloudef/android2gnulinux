@@ -125,6 +125,17 @@ java_lang_String_equals(JNIEnv *env, jobject object, va_list args)
    return equal;
 }
 
+jbyteArray
+java_lang_String_getBytes(JNIEnv *env, jobject object, va_list args)
+{
+   assert(env && object);
+   const char *utf = (*env)->GetStringUTFChars(env, object, NULL);
+   const size_t len = strlen(utf);
+   jbyteArray bytes = (*env)->NewByteArray(env, len);
+   (*env)->SetByteArrayRegion(env, bytes, 0, len, utf);
+   return bytes;
+}
+
 jclass
 java_lang_Class_forName(JNIEnv *env, jobject object, va_list args)
 {
