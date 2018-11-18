@@ -103,13 +103,18 @@ wrapper_create(const char *const symbol, void *function)
       return NULL;
    }
 
+   const size_t len = strlen(symbol) + 1;
+   char *copy = malloc(len);
+   assert(copy && "welp, malloc failed");
+   memcpy(copy, symbol, len);
+
 #ifdef WRAPPER_TRACE
    const size_t sz = &wrapper_end - &wrapper_start;
    unsigned char *fun = mmap(NULL, sz, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
    assert(fun != MAP_FAILED);
    memcpy(fun, &wrapper_start, sz);
 #ifdef ANDROID_X86_LINKER
-   memcpy(fun + (&wrapper_symbol - &wrapper_start) + 1, &symbol, sizeof(symbol));
+   memcpy(fun + (&wrapper_symbol - &wrapper_start) + 1, &copy, sizeof(symbol));
    memcpy(fun + (&wrapper_trace - &wrapper_start) + 1, (uintptr_t[]){ (uintptr_t)trace }, sizeof(uintptr_t));
    memcpy(fun + (&wrapper_call - &wrapper_start) + 1, &function, sizeof(function));
 #else
