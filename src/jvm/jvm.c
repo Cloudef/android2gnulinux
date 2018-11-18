@@ -1627,6 +1627,12 @@ vm_init(JavaVM *vm, struct JNIInvokeInterface *invoke)
    *vm = invoke;
 }
 
+const char*
+jvm_get_class_name(struct jvm *jvm, jobject object)
+{
+   return jvm_get_object_of_type(jvm, object, JVM_OBJECT_CLASS)->klass.name.data;
+}
+
 void*
 jvm_get_native_method(struct jvm *jvm, const char *klass, const char *method)
 {

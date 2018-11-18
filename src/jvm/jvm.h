@@ -72,6 +72,9 @@ struct jvm {
    JavaVM vm; // points to invoke
 };
 
+const char*
+jvm_get_class_name(struct jvm *jvm, jobject object);
+
 void*
 jvm_get_native_method(struct jvm *jvm, const char *klass, const char *method);
 
