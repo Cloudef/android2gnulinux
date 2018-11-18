@@ -90,6 +90,7 @@ wrapper_set_cpp_demangler(void *function)
 {
 #ifdef WRAPPER_TRACE
    __cxa_demangle.ptr = function;
+   verbose_log("wrapper: set cpp_demangler to %p", function);
 #endif
 }
 
