@@ -825,7 +825,7 @@ JNIEnv_GetStringLength(JNIEnv* p0, jstring p1)
    return 0;
 }
 
-const jchar*
+static const jchar*
 JNIEnv_GetStringChars(JNIEnv* p0, jstring p1, jboolean* p2)
 {
    assert(p0 && p1);
@@ -1262,7 +1262,7 @@ JNIEnv_ReleasePrimitiveArrayCritical(JNIEnv *env, jarray array, void *carray, ji
    assert(env && array);
 }
 
-const jchar*
+static const jchar*
 JNIEnv_GetStringCritical(JNIEnv* p0, jstring p1, jboolean* p2)
 {
    assert(p0 && p1);
@@ -1322,7 +1322,7 @@ JNIEnv_GetDirectBufferCapacity(JNIEnv* p0, jobject p1)
    return 0;
 }
 
-const char*
+static const char*
 JNIEnv_GetStringUTFChars(JNIEnv *env, jstring string, jboolean *isCopy)
 {
    assert(env);
