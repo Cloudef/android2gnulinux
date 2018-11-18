@@ -13,17 +13,6 @@
 // https://android.googlesource.com/platform/bionic/+/master/docs/32-bit-abi.md
 typedef uint32_t bionic_off_t;
 
-// System
-
-#define PROP_NAME_MAX   32
-#define PROP_VALUE_MAX  92
-
-int
-__system_property_get(const char *name, char *value)
-{
-   return 0;
-}
-
 // AAsset
 
 struct AAsset {

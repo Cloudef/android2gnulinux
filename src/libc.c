@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <signal.h>
 #include <limits.h>
 #include <math.h>
@@ -39,6 +40,21 @@ struct bionic_sigaction {
 #endif
 
 // Stuff that doesn't exist in glibc
+
+#define PROP_NAME_MAX   32
+#define PROP_VALUE_MAX  92
+
+int
+__system_property_get(const char *name, char *value)
+{
+   verbose("%s", name);
+
+   if (!strcmp(name, "ro.build.version.sdk"))
+      return snprintf(value, PROP_VALUE_MAX, "28");
+
+   *value = 0;
+   return 0;
+}
 
 void
 __assert2(const char* file, int line, const char* function, const char* failed_expression)
