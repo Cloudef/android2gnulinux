@@ -92,7 +92,7 @@ tkill(int tid, int sig)
 //    __real_malloc in the same file as __wrap_malloc; if you do, the assembler may resolve
 //    the call before the linker has a chance to wrap it to malloc.
 
-size_t __real_IO_file_xsputn(FILE *f, const void *buf, size_t n) {}
+size_t __real_IO_file_xsputn(FILE *f, const void *buf, size_t n) { return 0; }
 
 #include "libc-ctype.h"
 
