@@ -10,6 +10,25 @@
 #include "linker/dlfcn.h"
 #include "wrapper/verbose.h"
 
+jstring
+java_lang_System_getProperty(JNIEnv *env, jobject object, va_list args)
+{
+   assert(env && object);
+   char value[92]; // PROP_VALUE_MAX 92
+   const char *key = (*env)->GetStringUTFChars(env, va_arg(args, jstring), NULL);
+
+   union {
+      void *ptr;
+      int (*fun)(const char *name, char *value);
+   } __system_property_get;
+
+   if (!(__system_property_get.ptr = bionic_dlsym(NULL, "__system_property_get")))
+      return NULL;
+
+   __system_property_get.fun(key, value);
+   return (*env)->NewStringUTF(env, value);
+}
+
 void
 java_lang_System_load(JNIEnv *env, jobject object, va_list args)
 {
