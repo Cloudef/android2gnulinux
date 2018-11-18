@@ -50,7 +50,7 @@ __system_property_get(const char *name, char *value)
    verbose("%s", name);
 
    if (!strcmp(name, "ro.build.version.sdk"))
-      return snprintf(value, PROP_VALUE_MAX, "28");
+      return snprintf(value, PROP_VALUE_MAX, "%d", INT_MAX);
 
    *value = 0;
    return 0;

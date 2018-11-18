@@ -1,5 +1,6 @@
 #include <stdarg.h>
 #include <stddef.h>
+#include <limits.h>
 #include <assert.h>
 #include "jvm/jni.h"
 
@@ -40,7 +41,7 @@ jint
 android_os_Build_VERSION_SDK_INT(JNIEnv *env, jobject object)
 {
    assert(env && object);
-   return (jint)~0; // Always the latest and greatest, XXX: maybe tunable, as can change app behaviour
+   return INT_MAX; // Always the latest and greatest, XXX: maybe tunable, as can change app behaviour
 }
 
 jstring
