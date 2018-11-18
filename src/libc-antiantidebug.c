@@ -29,7 +29,6 @@ bionic_open(const char *path, int oflag, ...)
             break;
          }
 
-         printf("%s\n", status);
          faked = fmemopen(status, sizeof(status), "rb");
          assert(faked && "fmemopen failed :/");
       }
