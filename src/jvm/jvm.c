@@ -250,6 +250,10 @@ jvm_get_object(struct jvm *jvm, const jobject o)
 static void
 jvm_object_print(struct jvm *jvm, const struct jvm_object *obj)
 {
+#ifndef VERBOSE_FUNCTIONS
+   return;
+#endif
+
    if (!obj) {
       verbose_log("[NULL]");
       return;
