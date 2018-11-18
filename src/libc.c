@@ -263,6 +263,12 @@ bionic___isfinitef(float f)
    return isfinite(f);
 }
 
+int
+bionic___isfinite(float f)
+{
+   return isfinite(f);
+}
+
 uintptr_t bionic___stack_chk_guard = 4;
 
 __attribute__((noreturn))
