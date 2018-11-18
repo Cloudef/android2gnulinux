@@ -32,12 +32,13 @@ wrapper.a: src/wrapper/verbose.h src/wrapper/wrapper.c src/wrapper/wrapper.h
 
 runtime/libdl.so: private override CPPFLAGS += -D_GNU_SOURCE -DLINKER_DEBUG=1
 runtime/libdl.so: private override CFLAGS += -Wno-pedantic -Wno-variadic-macros -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast
+runtime/libdl.so: private override LDLIBS += -ldl -lpthread
 runtime/libdl.so: wrapper.a src/linker/dlfcn.c src/linker/linker.c src/linker/linker_environ.c src/linker/rt.c src/linker/strlcpy.c
 runtime/libc.so: private override CPPFLAGS += -D_GNU_SOURCE
 runtime/libc.so: private override LDFLAGS += -Wl,-wrap,_IO_file_xsputn
 runtime/libc.so: private override CFLAGS += -Wno-deprecated-declarations
 runtime/libc.so: private override LDLIBS += `pkg-config --libs libbsd libunwind`
-runtime/libc.so: src/wrapper/verbose.h src/libc.c src/libc-stdio.c src/libc-sha1.c src/libc-antiantidebug.c
+runtime/libc.so: wrapper.a src/libc.c src/libc-stdio.c src/libc-sha1.c src/libc-antiantidebug.c
 runtime/libpthread.so: private override CPPFLAGS += -D_GNU_SOURCE
 runtime/libpthread.so: private override LDLIBS += -lpthread
 runtime/libpthread.so: src/libpthread.c
@@ -50,21 +51,29 @@ runtime/libEGL.so: src/libEGL.c
 runtime/libOpenSLES.so: private override CFLAGS += -Wno-pedantic
 runtime/libOpenSLES.so: wrapper.a src/libOpenSLES.c
 
-jvm.a: private override CPPFLAGS += -D_GNU_SOURCE
-jvm.a: private override CFLAGS += -Wno-unused-variable -Wno-pedantic
-jvm.a: wrapper.a src/jvm/jvm.c
+runtime/libjvm.so: private override CPPFLAGS += -D_GNU_SOURCE
+runtime/libjvm.so: private override CFLAGS += -Wno-pedantic
+runtime/libjvm.so: wrapper.a src/jvm/jvm.c
 runtime/libjvm-java.so: private override CPPFLAGS += -D_GNU_SOURCE
-runtime/libjvm-java.so: src/wrapper/verbose.h src/libjvm-java.c
-runtime/libjvm-android.so: src/wrapper/verbose.h src/libjvm-android.c
-runtime/libjvm-unity.so: src/wrapper/verbose.h src/libjvm-unity.c
+runtime/libjvm-java.so: src/libjvm-java.c
+runtime/libjvm-android.so: src/libjvm-android.c
+runtime/libjvm-unity.so: src/libjvm-unity.c
 
-app: private override CFLAGS += -Wno-pedantic -D_DEFAULT_SOURCE
-app: private override LDLIBS += -ldl -Wl,-rpath,runtime runtime/libdl.so runtime/libpthread.so
-app: private override LDLIBS += runtime/libjvm-java.so runtime/libjvm-android.so runtime/libjvm-unity.so
-app: wrapper.a src/app.c runtime/libdl.so
-app: runtime/libc.so runtime/libpthread.so runtime/libandroid.so runtime/liblog.so
+# trick linker to link against unversioned libs
+libdl.so: runtime/libdl.so
+	ln -s $< $@
+libpthread.so: runtime/libpthread.so
+	ln -s $< $@
+
+app: private override CFLAGS += -D_DEFAULT_SOURCE
+app: private override LDFLAGS += -L. -Wl,-Y,runtime,-rpath,runtime
+app: private override LDLIBS += -ldl -lpthread
+app: private override LDLIBS += -ljvm -ljvm-java -ljvm-android -ljvm-unity
+app: src/app.c libdl.so libpthread.so
+app: runtime/libpthread.so runtime/libc.so
+app: runtime/libandroid.so runtime/liblog.so
 app: runtime/libEGL.so runtime/libOpenSLES.so
-app: jvm.a runtime/libjvm-java.so runtime/libjvm-android.so runtime/libjvm-unity.so
+app: runtime/libjvm.so runtime/libjvm-java.so runtime/libjvm-android.so runtime/libjvm-unity.so
 
 install-bin: $(bins)
 	install -Dm755 $^ -t "$(DESTDIR)$(PREFIX)$(BINDIR)"
@@ -76,3 +85,4 @@ clean:
 	$(RM) -r runtime
 
 .PHONY: all clean install
+.INTERMEDIATE: libdl.so libpthread.so

@@ -1,12 +1,158 @@
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <libgen.h>
 #include <dlfcn.h>
 #include <err.h>
-#include <assert.h>
-#include <linux/limits.h>
+#include <limits.h>
 #include "linker/dlfcn.h"
 #include "jvm/jvm.h"
+
+static int
+run_jni_game(struct jvm *jvm)
+{
+   // Works only with unity libs for now
+   struct {
+      union {
+         void *ptr;
+         void (*fun)(JNIEnv*, jobject, jobject);
+      } native_init_jni;
+
+      union {
+         void *ptr;
+         void (*fun)(JNIEnv*, jobject);
+      } native_done;
+
+      union {
+         void *ptr;
+         void (*fun)(JNIEnv*, jobject, jstring);
+      } native_file;
+
+      union {
+         void *ptr;
+         jboolean (*fun)(JNIEnv*, jobject);
+      } native_pause;
+
+      union {
+         void *ptr;
+         void (*fun)(JNIEnv*, jobject, jint, jobject);
+      } native_recreate_gfx_state;
+
+      union {
+         void *ptr;
+         jboolean (*fun)(JNIEnv*, jobject);
+      } native_render;
+
+      union {
+         void *ptr;
+         void (*fun)(JNIEnv*, jobject);
+      } native_resume;
+
+      union {
+         void *ptr;
+         void (*fun)(JNIEnv*, jobject, jboolean);
+      } native_focus_changed;
+
+      union {
+         void *ptr;
+         void (*fun)(JNIEnv*, jobject, jstring);
+      } native_set_input_string;
+
+      union {
+         void *ptr;
+         void (*fun)(JNIEnv*, jobject);
+      } native_soft_input_closed;
+
+      union {
+         void *ptr;
+         void (*fun)(JNIEnv*, jobject, jboolean);
+      } native_set_input_canceled;
+
+      union {
+         void *ptr;
+         void (*fun)(JNIEnv*, jobject, jobject);
+      } native_init_www;
+
+      union {
+         void *ptr;
+         void (*fun)(JNIEnv*, jobject, jobject);
+      } native_init_web_request;
+
+      union {
+         void *ptr;
+         void (*fun)(JNIEnv*, jobject, jlong);
+      } native_add_vsync_time;
+
+      union {
+         void *ptr;
+         void (*fun)(JNIEnv*, jobject, jboolean);
+      } native_forward_events_to_dalvik;
+
+      union {
+         void *ptr;
+         void (*fun)(JNIEnv*, jobject, jobject);
+      } native_inject_event;
+   } unity;
+
+   static const char *unity_player_class = "com.unity3d.player.UnityPlayer";
+   unity.native_init_jni.ptr = jvm_get_native_method(jvm, unity_player_class, "initJni");
+   unity.native_done.ptr = jvm_get_native_method(jvm, unity_player_class, "nativeDone");
+   unity.native_file.ptr = jvm_get_native_method(jvm, unity_player_class, "nativeFile");
+   unity.native_pause.ptr = jvm_get_native_method(jvm, unity_player_class, "nativePause");
+   unity.native_recreate_gfx_state.ptr = jvm_get_native_method(jvm, unity_player_class, "nativeRecreateGfxState");
+   unity.native_render.ptr = jvm_get_native_method(jvm, unity_player_class, "nativeRender");
+   unity.native_resume.ptr = jvm_get_native_method(jvm, unity_player_class, "nativeResume");
+   unity.native_focus_changed.ptr = jvm_get_native_method(jvm, unity_player_class, "nativeFocusChanged");
+   unity.native_set_input_string.ptr = jvm_get_native_method(jvm, unity_player_class, "nativeSetInputString");
+   unity.native_soft_input_closed.ptr = jvm_get_native_method(jvm, unity_player_class, "nativeSoftInputClosed");
+   unity.native_set_input_canceled.ptr = jvm_get_native_method(jvm, unity_player_class, "nativeSetInputCanceled");
+   unity.native_init_www.ptr = jvm_get_native_method(jvm, unity_player_class, "nativeInitWWW");
+   unity.native_init_web_request.ptr = jvm_get_native_method(jvm, unity_player_class, "nativeInitWebRequest");
+   unity.native_add_vsync_time.ptr = jvm_get_native_method(jvm, unity_player_class, "nativeAddVSyncTime");
+   unity.native_forward_events_to_dalvik.ptr = jvm_get_native_method(jvm, unity_player_class, "nativeForwardEventsToDalvik");
+   unity.native_inject_event.ptr = jvm_get_native_method(jvm, unity_player_class, "nativeInjectEvent");
+
+   if (!unity.native_init_jni.ptr || !unity.native_file.ptr)
+      errx(EXIT_FAILURE, "not a unity jni lib");
+
+   const jobject context = jvm->native.AllocObject(&jvm->env, jvm->native.FindClass(&jvm->env, "android/app/Activity"));
+   unity.native_init_jni.fun(&jvm->env, context, context);
+
+#if WOLF
+   unity.native_file.fun(&jvm->env, context, jvm->env->NewStringUTF(&jvm->env, "/mnt/media/dev/android2gnulinux/apks/wolf.apk"));
+#elif STARLIGHT
+   unity.native_file.fun(&jvm->env, context, jvm->env->NewStringUTF(&jvm->env, "/mnt/media/dev/android2gnulinux/apks/starlight.apk"));
+#elif STAROCEAN
+   unity.native_file.fun(&jvm->env, context, jvm->env->NewStringUTF(&jvm->env, "/mnt/media/dev/android2gnulinux/apks/starocean.apk"));
+#elif SHADOWVERSE
+   unity.native_file.fun(&jvm->env, context, jvm->env->NewStringUTF(&jvm->env, "/mnt/media/dev/android2gnulinux/apks/shadowverse.apk"));
+#elif HEARTHSTONE
+   unity.native_file.fun(&jvm->env, context, jvm->env->NewStringUTF(&jvm->env, "/mnt/media/dev/android2gnulinux/apks/hearthstone.apk"));
+   unity.native_file.fun(&jvm->env, context, jvm->env->NewStringUTF(&jvm->env, "/mnt/media/dev/android2gnulinux/local/obb/com.blizzard.wtcg.hearthstone/patch.1561502.com.blizzard.wtcg.hearthstone.obb"));
+   unity.native_file.fun(&jvm->env, context, jvm->env->NewStringUTF(&jvm->env, "/mnt/media/dev/android2gnulinux/local/obb/com.blizzard.wtcg.hearthstone/main.1561502.com.blizzard.wtcg.hearthstone.obb"));
+#else
+   unity.native_file.fun(&jvm->env, context, jvm->env->NewStringUTF(&jvm->env, "/mnt/media/dev/android2gnulinux/apks/honkai.apk"));
+   unity.native_file.fun(&jvm->env, context, jvm->env->NewStringUTF(&jvm->env, "/mnt/media/dev/android2gnulinux/local/obb/com.miHoYo.bh3oversea/main.100.com.miHoYo.bh3oversea.obb"));
+#endif
+
+   // unity.native_forward_events_to_dalvik.fun(&jvm->env, context, true);
+   unity.native_init_www.fun(&jvm->env, context, jvm->env->FindClass(&jvm->env, "com/unity3d/player/WWW"));
+   unity.native_init_web_request.fun(&jvm->env, context, jvm->env->FindClass(&jvm->env, "com/unity3d/player/UnityWebRequest"));
+   unity.native_recreate_gfx_state.fun(&jvm->env, context, 0, context);
+   unity.native_focus_changed.fun(&jvm->env, context, true);
+   unity.native_resume.fun(&jvm->env, context);
+   unity.native_done.fun(&jvm->env, context);
+   // unity.native_add_vsync_time.fun(&jvm->env, context, 0);
+
+   while (unity.native_render.fun(&jvm->env, context)) {
+      static int i = 0;
+      if (++i >= 10) {
+         unity.native_inject_event.fun(&jvm->env, context, jvm->native.AllocObject(&jvm->env, jvm->native.FindClass(&jvm->env, "android/view/MotionEvent")));
+         i = 0;
+      }
+   }
+
+   return EXIT_SUCCESS;
+}
 
 int
 main(int argc, const char *argv[])
@@ -23,76 +169,39 @@ main(int argc, const char *argv[])
       dl_parse_library_path(dirname(abs), ";");
    }
 
-   {
-      void *handle;
-      if (!(handle = bionic_dlopen(argv[1], RTLD_NOW | RTLD_LOCAL)))
-         errx(EXIT_FAILURE, "dlopen failed: %s", bionic_dlerror());
+   void *handle;
+   if (!(handle = bionic_dlopen(argv[1], RTLD_LOCAL | RTLD_NOW)))
+      errx(EXIT_FAILURE, "dlopen failed: %s", bionic_dlerror());
 
-      printf("trying JNI_OnLoad from: %s\n", argv[1]);
+   printf("trying JNI_OnLoad from: %s\n", argv[1]);
 
+   struct {
+      union {
+         void *ptr;
+         jint (*fun)(void*, void*);
+      } JNI_OnLoad;
+
+      union {
+         void *ptr;
+         int (*fun)(int, const char*[]);
+      } main;
+   } entry;
+
+   int ret = EXIT_FAILURE;
+   if ((entry.JNI_OnLoad.ptr = bionic_dlsym(handle, "JNI_OnLoad"))) {
       struct jvm jvm;
       jvm_init(&jvm);
-      const jobject context = jvm.native.AllocObject(&jvm.env, jvm.native.FindClass(&jvm.env, "android/app/Activity"));
-
-      jint (*JNI_OnLoad)(void*, void*) = bionic_dlsym(handle, "JNI_OnLoad");
-      assert(JNI_OnLoad);
-
-      JNI_OnLoad(&jvm.vm, NULL);
-
-      static const char *unity_player_class = "com.unity3d.player.UnityPlayer";
-      void (*native_init_jni)(JNIEnv*, jobject, jobject) = jvm_get_native_method(&jvm, unity_player_class, "initJni");
-      void (*native_done)(JNIEnv*, jobject) = jvm_get_native_method(&jvm, unity_player_class, "nativeDone");
-      void (*native_file)(JNIEnv*, jobject, jstring) = jvm_get_native_method(&jvm, unity_player_class, "nativeFile");
-      // jboolean (*native_pause)(JNIEnv*, jobject) = jvm_get_native_method(&jvm, unity_player_class, "nativePause");
-      void (*native_recreate_gfx_state)(JNIEnv*, jobject, jint, jobject) = jvm_get_native_method(&jvm, unity_player_class, "nativeRecreateGfxState");
-      jboolean (*native_render)(JNIEnv*, jobject) = jvm_get_native_method(&jvm, unity_player_class, "nativeRender");
-      void (*native_resume)(JNIEnv*, jobject) = jvm_get_native_method(&jvm, unity_player_class, "nativeResume");
-      void (*native_focus_changed)(JNIEnv*, jobject, jboolean) = jvm_get_native_method(&jvm, unity_player_class, "nativeFocusChanged");
-      // void (*native_set_input_string)(JNIEnv*, jobject, jstring) = jvm_get_native_method(&jvm, unity_player_class, "nativeSetInputString");
-      // void (*native_soft_input_closed)(JNIEnv*, jobject) = jvm_get_native_method(&jvm, unity_player_class, "nativeSoftInputClosed");
-      // void (*native_set_input_canceled)(JNIEnv*, jobject, jboolean) = jvm_get_native_method(&jvm, unity_player_class, "nativeSetInputCanceled");
-      void (*native_init_www)(JNIEnv*, jobject, jobject) = jvm_get_native_method(&jvm, unity_player_class, "nativeInitWWW");
-      void (*native_init_web_request)(JNIEnv*, jobject, jobject) = jvm_get_native_method(&jvm, unity_player_class, "nativeInitWebRequest");
-      // void (*native_add_vsync_time)(JNIEnv*, jobject, jlong) = jvm_get_native_method(&jvm, unity_player_class, "nativeAddVSyncTime");
-      // void (*native_forward_events_to_dalvik)(JNIEnv*, jobject, jboolean) = jvm_get_native_method(&jvm, unity_player_class, "nativeForwardEventsToDalvik");
-      void (*native_inject_event)(JNIEnv*, jobject, jobject) = jvm_get_native_method(&jvm, unity_player_class, "nativeInjectEvent");
-      native_init_jni(&jvm.env, context, context);
-#if WOLF
-      native_file(&jvm.env, context, jvm.env->NewStringUTF(&jvm.env, "/mnt/media/dev/android2gnulinux/apks/wolf.apk"));
-#elif STARLIGHT
-      native_file(&jvm.env, context, jvm.env->NewStringUTF(&jvm.env, "/mnt/media/dev/android2gnulinux/apks/starlight.apk"));
-#elif SHADOWVERSE
-      native_file(&jvm.env, context, jvm.env->NewStringUTF(&jvm.env, "/mnt/media/dev/android2gnulinux/apks/shadowverse.apk"));
-#elif HEARTHSTONE
-      native_file(&jvm.env, context, jvm.env->NewStringUTF(&jvm.env, "/mnt/media/dev/android2gnulinux/apks/hearthstone.apk"));
-      native_file(&jvm.env, context, jvm.env->NewStringUTF(&jvm.env, "/mnt/media/dev/android2gnulinux/local/obb/com.blizzard.wtcg.hearthstone/patch.1561502.com.blizzard.wtcg.hearthstone.obb"));
-      native_file(&jvm.env, context, jvm.env->NewStringUTF(&jvm.env, "/mnt/media/dev/android2gnulinux/local/obb/com.blizzard.wtcg.hearthstone/main.1561502.com.blizzard.wtcg.hearthstone.obb"));
-#else
-      native_file(&jvm.env, context, jvm.env->NewStringUTF(&jvm.env, "/mnt/media/dev/android2gnulinux/apks/honkai.apk"));
-      native_file(&jvm.env, context, jvm.env->NewStringUTF(&jvm.env, "/mnt/media/dev/android2gnulinux/local/obb/com.miHoYo.bh3oversea/main.100.com.miHoYo.bh3oversea.obb"));
-#endif
-      // native_forward_events_to_dalvik(&jvm.env, context, true);
-      native_init_www(&jvm.env, context, jvm.native.FindClass(&jvm.env, "com/unity3d/player/WWW"));
-      native_init_web_request(&jvm.env, context, jvm.native.FindClass(&jvm.env, "com/unity3d/player/UnityWebRequest"));
-      native_recreate_gfx_state(&jvm.env, context, 0, context);
-      native_focus_changed(&jvm.env, context, true);
-      native_resume(&jvm.env, context);
-      native_done(&jvm.env, context);
-      // native_add_vsync_time(&jvm.env, context, 0);
-
-      while (native_render(&jvm.env, context)) {
-         static int i = 0;
-         if (++i >= 10) {
-            native_inject_event(&jvm.env, context, jvm.native.AllocObject(&jvm.env, jvm.native.FindClass(&jvm.env, "android/view/MotionEvent")));
-            i = 0;
-         }
-      }
-
-      printf("unloading module: %s\n", argv[1]);
-      bionic_dlclose(handle);
+      entry.JNI_OnLoad.fun(&jvm.vm, NULL);
+      ret = run_jni_game(&jvm);
       jvm_release(&jvm);
+   } else if ((entry.main.ptr = bionic_dlsym(handle, "main"))) {
+      ret = entry.main.fun(argc - 1, &argv[1]);
+   } else {
+      warnx("no entrypoint found in %s", argv[1]);
    }
 
+   printf("unloading module: %s\n", argv[1]);
+   bionic_dlclose(handle);
    printf("exiting\n");
-   return EXIT_SUCCESS;
+   return ret;
 }
