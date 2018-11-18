@@ -27,6 +27,7 @@ $(bins): %:
 	$(LINK.c) $(filter %.c %.a,$^) $(LDLIBS) -o $@
 
 wrapper.a: private override CPPFLAGS += -D_GNU_SOURCE
+wrapper.a: private override CFLAGS += -fvisibility=hidden
 wrapper.a: src/wrapper/verbose.h src/wrapper/wrapper.c src/wrapper/wrapper.h
 
 runtime/libdl.so: private override CPPFLAGS += -D_GNU_SOURCE -DLINKER_DEBUG=1
