@@ -70,6 +70,9 @@ void *bionic_dlopen(const char *filename, int flag)
     ret = apkenv_find_library(filename, false);
 
     if (unlikely(ret == NULL)) {
+        if (!(flag & (RTLD_LAZY | RTLD_NOW)))
+          flag |= RTLD_NOW;
+
         if (!(ret = dlopen(filename, flag)))
             set_dlerror(DL_ERR_CANNOT_LOAD_LIBRARY);
     } else {

@@ -394,7 +394,7 @@ static Elf32_Sym *apkenv__elf_lookup(soinfo *si, unsigned hash, const char *name
     unsigned n;
 
     TRACE_TYPE(LOOKUP, "%5d SEARCH %s in %s@0x%08x %08x %d\n", apkenv_pid,
-               name, si->name, si->base, hash, hash % si->nbucket);
+               name, si->name, si->base, hash, hash % (si->nbucket ? si->nbucket : 1));
     if (si->nbucket == 0) {
         return NULL;
     }
@@ -1374,28 +1374,20 @@ static int apkenv_reloc_library(soinfo *si, Elf32_Rel *rel, unsigned count)
 
             if ((sym_addr = (intptr_t)dlsym(RTLD_DEFAULT, wrap_sym_name))) {
                LINKER_DEBUG_PRINTF("%s hooked symbol %s to %x\n", si->name, wrap_sym_name, sym_addr);
+            } else if ((s = apkenv__do_lookup(si, sym_name, &base))) {
+                // normal symbol
             } else if ((sym_addr = (intptr_t)dlsym(RTLD_DEFAULT, sym_name))) {
                if (strstr(sym_name, "pthread_"))
                   fprintf(stderr, "symbol may need to be wrapped: %s\n", sym_name);
                LINKER_DEBUG_PRINTF("%s hooked symbol %s to %x\n", si->name, sym_name, sym_addr);
             }
-#if 0
-            if ((sym_addr = (unsigned)apkenv_get_hooked_symbol(sym_name, 1)) != 0) {
-               LINKER_DEBUG_PRINTF("%s hooked symbol %s to %x\n", si->name, sym_name, sym_addr);
-            }
-#endif
-            else
-            {
-               s = apkenv__do_lookup(si, sym_name, &base);
-            }
-            if(sym_addr != 0)
-            {
+
+            if (sym_addr != 0) {
                 Dl_info info;
                 ElfW(Sym) *extra;
                 if (dladdr1((void*)sym_addr, &info, (void**) &extra, RTLD_DL_SYMENT) && (!extra || ELF32_ST_TYPE(extra->st_info) == STT_FUNC))
                     sym_addr = (unsigned)wrapper_create(sym_name, (void*)sym_addr);
-            } else
-            if(s == NULL) {
+            } else if (s == NULL) {
                 /* We only allow an undefined symbol if this is a weak
                    reference..   */
                 s = &symtab[sym];
