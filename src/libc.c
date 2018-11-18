@@ -83,8 +83,6 @@ tkill(int tid, int sig)
    return syscall(SYS_tkill, tid, sig);
 }
 
-#include "libc-sha1.h"
-
 // Stuff needed for runtime compatibility, but not neccessary for linking
 // Also stuff that exists in glibc, but needs to be wrapped for runtime compatibility
 
