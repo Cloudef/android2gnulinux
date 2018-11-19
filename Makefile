@@ -59,6 +59,7 @@ runtime/libjvm-java.so: private override CPPFLAGS += -D_GNU_SOURCE
 runtime/libjvm-java.so: src/libjvm-java.c
 runtime/libjvm-android.so: src/libjvm-android.c
 runtime/libjvm-unity.so: src/libjvm-unity.c
+runtime/libjvm-misc.so: src/libjvm-misc.c
 
 # trick linker to link against unversioned libs
 libdl.so: runtime/libdl.so
@@ -69,12 +70,12 @@ libpthread.so: runtime/libpthread.so
 andre: private override CPPFLAGS += -D_GNU_SOURCE
 andre: private override LDFLAGS += -L. -Wl,-Y,runtime,-rpath,runtime
 andre: private override LDLIBS += -ldl -lpthread
-andre: private override LDLIBS += -ljvm -ljvm-java -ljvm-android -ljvm-unity
+andre: private override LDLIBS += -ljvm -ljvm-java -ljvm-android -ljvm-unity -ljvm-misc
 andre: src/loader.c libdl.so libpthread.so
 andre: runtime/libpthread.so runtime/libc.so
 andre: runtime/libandroid.so runtime/liblog.so
 andre: runtime/libEGL.so runtime/libOpenSLES.so
-andre: runtime/libjvm.so runtime/libjvm-java.so runtime/libjvm-android.so runtime/libjvm-unity.so
+andre: runtime/libjvm.so runtime/libjvm-java.so runtime/libjvm-android.so runtime/libjvm-unity.so runtime/libjvm-misc.so
 
 install-bin: $(bins)
 	install -Dm755 $^ -t "$(DESTDIR)$(PREFIX)$(BINDIR)"
