@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <dirent.h>
 #include <libgen.h>
 #include <dlfcn.h>
 #include <elf.h>
@@ -124,22 +125,19 @@ run_jni_game(struct jvm *jvm)
    const jobject context = jvm->native.AllocObject(&jvm->env, jvm->native.FindClass(&jvm->env, "android/app/Activity"));
    unity.native_init_jni.fun(&jvm->env, context, context);
 
-#if WOLF
-   unity.native_file.fun(&jvm->env, context, jvm->env->NewStringUTF(&jvm->env, "/mnt/media/dev/android2gnulinux/apks/wolf.apk"));
-#elif STARLIGHT
-   unity.native_file.fun(&jvm->env, context, jvm->env->NewStringUTF(&jvm->env, "/mnt/media/dev/android2gnulinux/apks/starlight.apk"));
-#elif STAROCEAN
-   unity.native_file.fun(&jvm->env, context, jvm->env->NewStringUTF(&jvm->env, "/mnt/media/dev/android2gnulinux/apks/starocean.apk"));
-#elif SHADOWVERSE
-   unity.native_file.fun(&jvm->env, context, jvm->env->NewStringUTF(&jvm->env, "/mnt/media/dev/android2gnulinux/apks/shadowverse.apk"));
-#elif HEARTHSTONE
-   unity.native_file.fun(&jvm->env, context, jvm->env->NewStringUTF(&jvm->env, "/mnt/media/dev/android2gnulinux/apks/hearthstone.apk"));
-   unity.native_file.fun(&jvm->env, context, jvm->env->NewStringUTF(&jvm->env, "/mnt/media/dev/android2gnulinux/local/obb/com.blizzard.wtcg.hearthstone/patch.1561502.com.blizzard.wtcg.hearthstone.obb"));
-   unity.native_file.fun(&jvm->env, context, jvm->env->NewStringUTF(&jvm->env, "/mnt/media/dev/android2gnulinux/local/obb/com.blizzard.wtcg.hearthstone/main.1561502.com.blizzard.wtcg.hearthstone.obb"));
-#else
-   unity.native_file.fun(&jvm->env, context, jvm->env->NewStringUTF(&jvm->env, "/mnt/media/dev/android2gnulinux/apks/honkai.apk"));
-   unity.native_file.fun(&jvm->env, context, jvm->env->NewStringUTF(&jvm->env, "/mnt/media/dev/android2gnulinux/local/obb/com.miHoYo.bh3oversea/main.100.com.miHoYo.bh3oversea.obb"));
-#endif
+   unity.native_file.fun(&jvm->env, context, jvm->env->NewStringUTF(&jvm->env, getenv("ANDROID_PACKAGE_FILE")));
+
+   {
+      DIR *dir;
+      const char *obb_dir = getenv("ANDROID_EXTERNAL_OBB_DIR");
+      if (obb_dir && (dir = opendir(obb_dir))) {
+         for (struct dirent *d; (d = readdir(dir));) {
+            char path[4096];
+            snprintf(path, sizeof(path), "%s/%s", obb_dir, d->d_name);
+            unity.native_file.fun(&jvm->env, context, jvm->env->NewStringUTF(&jvm->env, path));
+         }
+      }
+   }
 
    // unity.native_forward_events_to_dalvik.fun(&jvm->env, context, true);
    unity.native_init_www.fun(&jvm->env, context, jvm->env->FindClass(&jvm->env, "com/unity3d/player/WWW"));

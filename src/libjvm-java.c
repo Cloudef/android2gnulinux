@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <libgen.h>
 #include <string.h>
 #include <assert.h>
 #include <err.h>
@@ -137,33 +138,16 @@ java_io_File_getPath(JNIEnv *env, jobject object, va_list args)
 {
    assert(env && object);
    // FIXME: see comment on `android_content_Context_getExternalFilesDir`
-#if WOLF
-   return (*env)->NewStringUTF(env, "/mnt/media/dev/android2gnulinux/local/data/com.swiftappskom.thewolfrpg/files");
-#elif STARLIGHT
-   return (*env)->NewStringUTF(env, "/mnt/media/dev/android2gnulinux/local/data/jp.co.bandainamcoent.BNEI0242/files");
-#elif SHADOWVERSE
-   return (*env)->NewStringUTF(env, "/mnt/media/dev/android2gnulinux/local/data/com.cygames.Shadowverse/files");
-#elif HEARTHSTONE
-   return (*env)->NewStringUTF(env, "/mnt/media/dev/android2gnulinux/local/data/com.blizzard.wtcg.hearthstone/files");
-#else
-   return (*env)->NewStringUTF(env, "/mnt/media/dev/android2gnulinux/local/data/com.miHoYo.bh3oversea/files");
-#endif
+   return (*env)->NewStringUTF(env, getenv("ANDROID_EXTERNAL_FILES_DIR"));
 }
 
 jstring
 java_io_File_getParent(JNIEnv *env, jobject object, va_list args)
 {
-#if WOLF
-   return (*env)->NewStringUTF(env, "/mnt/media/dev/android2gnulinux/local/data/com.swiftappskom.thewolfrpg");
-#elif STARLIGHT
-   return (*env)->NewStringUTF(env, "/mnt/media/dev/android2gnulinux/local/data/jp.co.bandainamcoent.BNEI0242");
-#elif SHADOWVERSE
-   return (*env)->NewStringUTF(env, "/mnt/media/dev/android2gnulinux/local/data/com.cygames.Shadowverse");
-#elif HEARTHSTONE
-   return (*env)->NewStringUTF(env, "/mnt/media/dev/android2gnulinux/local/data/com.blizzard.wtcg.hearthstone");
-#else
-   return (*env)->NewStringUTF(env, "/mnt/media/dev/android2gnulinux/local/data/com.miHoYo.bh3oversea");
-#endif
+   // FIXME: see comment on `android_content_Context_getExternalFilesDir`
+   char path[4096];
+   snprintf(path, sizeof(path), "%s", getenv("ANDROID_EXTERNAL_FILES_DIR"));
+   return (*env)->NewStringUTF(env, dirname(path));
 }
 
 jboolean
