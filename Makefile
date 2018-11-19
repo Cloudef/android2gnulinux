@@ -9,7 +9,7 @@ WARNINGS := -Wall -Wextra -Wpedantic -Wformat=2 -Wstrict-aliasing=3 -Wstrict-ove
 
 override CFLAGS ?= -g
 override CFLAGS += -std=c11 $(WARNINGS)
-override CPPFLAGS += -Isrc -DANDROID_X86_LINKER -DVERBOSE_FUNCTIONS
+override CPPFLAGS += -Isrc -DANDROID_X86_LINKER # -DVERBOSE_FUNCTIONS
 
 bins = andre
 all: $(bins)
