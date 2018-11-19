@@ -63,18 +63,18 @@ it's talking to java but in reality it's calling functions from the
 `runtime/libjvm-*.so` libraries. The `runtime/libjvm-*.so` libraries
 implement java apis referenced by the application in C.
 
-In future, there might be very small java bytecode interpreter, that we
+In future, there might be very small dalvik bytecode interpreter, that we
 can use to eliminate the need of porting internal java dependencies and
 implementing entrypoint for every native application. We would only have
 to implement the external java apis that exist in android system image in
 C, and yes, this also means you could run android java applications.
 
 If you are porting android application to GNU/Linux that heavily relies
-on JNI, you can use the `libjvm.a` to use the minimal JVM inside the
+on JNI, you can use the `libjvm.so` to use the minimal JVM inside the
 application, without having to rewrite the JNI reliant code. At this
 moment however, you still have to manually do the initial JNI calls
 that setup and initialize your application. This may not be needed
-eventually, if we implemented what was described above (minimal java
+eventually, if we implemented what was described above (minimal dalvik
 bytecode interpreter).
 
 ## Related Work
