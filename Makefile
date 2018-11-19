@@ -66,7 +66,7 @@ libdl.so: runtime/libdl.so
 libpthread.so: runtime/libpthread.so
 	ln -s $< $@
 
-app: private override CFLAGS += -D_DEFAULT_SOURCE
+app: private override CPPFLAGS += -D_GNU_SOURCE
 app: private override LDFLAGS += -L. -Wl,-Y,runtime,-rpath,runtime
 app: private override LDLIBS += -ldl -lpthread
 app: private override LDLIBS += -ljvm -ljvm-java -ljvm-android -ljvm-unity

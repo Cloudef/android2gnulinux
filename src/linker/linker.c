@@ -1628,19 +1628,11 @@ void apkenv_call_constructors_recursive(soinfo *si)
     //    out above, the libc constructor will be called again (recursively!).
     si->constructors_called = 1;
 
-    if (si->flags & FLAG_EXE) {
-        TRACE("[ %5d Calling preinit_array @ 0x%08x [%d] for '%s' ]\n",
-              apkenv_pid, (unsigned)si->preinit_array, si->preinit_array_count,
-              si->name);
-        apkenv_call_array(si->preinit_array, si->preinit_array_count, 0);
-        TRACE("[ %5d Done calling preinit_array for '%s' ]\n", apkenv_pid, si->name);
-    } else {
-        if (si->preinit_array) {
-            DL_ERR("%5d Shared library '%s' has a preinit_array table @ 0x%08x."
-                   " This is INVALID.", apkenv_pid, si->name,
-                   (unsigned)si->preinit_array);
-        }
-    }
+    TRACE("[ %5d Calling preinit_array @ 0x%08x [%d] for '%s' ]\n",
+          apkenv_pid, (unsigned)si->preinit_array, si->preinit_array_count,
+          si->name);
+    apkenv_call_array(si->preinit_array, si->preinit_array_count, 0);
+    TRACE("[ %5d Done calling preinit_array for '%s' ]\n", apkenv_pid, si->name);
 
     if (si->dynamic) {
         unsigned *d;

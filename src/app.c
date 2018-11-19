@@ -1,16 +1,23 @@
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <libgen.h>
 #include <dlfcn.h>
+#include <elf.h>
 #include <err.h>
 #include <limits.h>
 #include "linker/dlfcn.h"
+#include "linker/linker.h"
 #include "jvm/jvm.h"
+#include <link.h>
 
 static int
 run_jni_game(struct jvm *jvm)
 {
    // Works only with unity libs for now
+   // XXX: What this basically is that, we port the Java bits to C
+   // XXX: This will become unneccessary as we make dalvik interpreter
+
    struct {
       union {
          void *ptr;
@@ -154,19 +161,38 @@ run_jni_game(struct jvm *jvm)
    return EXIT_SUCCESS;
 }
 
+static void
+raw_start(void *entry, int argc, const char *argv[])
+{
+   // XXX: make this part of the linker when it's rewritten
+#if ANDROID_X86_LINKER
+   __asm__("mov 2*4(%ebp),%eax"); /* entry */
+   __asm__("mov 3*4(%ebp),%ecx"); /* original_argc */
+   __asm__("mov 4*4(%ebp),%edx"); /* original_argv */
+   __asm__("mov %edx,%esp"); /* Trim stack. */
+   __asm__("push %edx"); /* New argv */
+   __asm__("push %ecx"); /* New argc */
+   __asm__("sub %edx,%edx"); /* no rtld_fini function */
+   __asm__("jmp *%eax"); /* Goto entry. */
+#else
+   warnx("raw_start not implemented for this asm platform, can't execute binaries.");
+#endif
+}
+
 int
 main(int argc, const char *argv[])
 {
    if (argc < 2)
-      errx(EXIT_FAILURE, "usage: so-file");
+      errx(EXIT_FAILURE, "usage: <elf file or jni library>");
 
    printf("loading module: %s\n", argv[1]);
 
    {
       // FIXME: when bionic linker is rewritten it will just use system search path
-      char abs[PATH_MAX];
+      char abs[PATH_MAX], paths[4096];
       realpath(argv[1], abs);
-      dl_parse_library_path(dirname(abs), ";");
+      snprintf(paths, sizeof(paths), "%s:%s", dirname(abs), "runtime-ndk");
+      dl_parse_library_path(paths, ":");
    }
 
    void *handle;
@@ -183,9 +209,26 @@ main(int argc, const char *argv[])
 
       union {
          void *ptr;
-         int (*fun)(int, const char*[]);
-      } main;
+      } start;
    } entry;
+
+   {
+      union {
+         char bytes[sizeof(Elf32_Ehdr)];
+         Elf32_Ehdr hdr;
+      } elf;
+
+      FILE *f;
+      if (!(f = fopen(argv[1], "rb")))
+         err(EXIT_FAILURE, "fopen(%s)", argv[1]);
+
+      fread(elf.bytes, 1, sizeof(elf.bytes), f);
+      fclose(f);
+
+      struct soinfo *si = handle;
+      if (elf.hdr.e_entry)
+         entry.start.ptr = (void*)(intptr_t)(si->base + elf.hdr.e_entry);
+   }
 
    int ret = EXIT_FAILURE;
    if ((entry.JNI_OnLoad.ptr = bionic_dlsym(handle, "JNI_OnLoad"))) {
@@ -194,8 +237,9 @@ main(int argc, const char *argv[])
       entry.JNI_OnLoad.fun(&jvm.vm, NULL);
       ret = run_jni_game(&jvm);
       jvm_release(&jvm);
-   } else if ((entry.main.ptr = bionic_dlsym(handle, "main"))) {
-      ret = entry.main.fun(argc - 1, &argv[1]);
+   } else if (entry.start.ptr) {
+      printf("jumping to %p\n", entry.start.ptr);
+      raw_start(entry.start.ptr, argc - 1, &argv[1]);
    } else {
       warnx("no entrypoint found in %s", argv[1]);
    }

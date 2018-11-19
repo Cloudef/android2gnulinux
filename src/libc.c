@@ -428,6 +428,59 @@ bionic_sysconf(int name)
    return sysconf(bionic_sysconf_to_glibc_sysconf(name));
 }
 
+static void
+__libc_fini(int signal, void *array)
+{
+   void** fini_array = (void**)array;
+
+   if (!array || (size_t)fini_array[0] != (size_t)~0)
+      return;
+
+   fini_array += 1;
+
+   int count;
+   for (count = 0; fini_array[count]; ++count);
+
+   for (; count > 0; --count) {
+      const union {
+         void *ptr;
+         void (*fun)(void);
+      } fini = { .ptr = fini_array[count] };
+
+      if ((size_t)fini.ptr != (size_t)~0)
+         fini.fun();
+   }
+}
+
+struct bionic_structors {
+   void (**preinit_array)(void);
+   void (**init_array)(void);
+   void (**fini_array)(void);
+};
+
+__attribute__((noreturn)) void
+bionic___libc_init(void *raw_args, void (*onexit)(void), int (*slingshot)(int, char**, char**), struct bionic_structors const *const structors)
+{
+   // linker has already called the constructors
+
+   union {
+      struct s {
+         uintptr_t argc;
+         char **argv;
+      } s;
+      char bytes[sizeof(struct s)];
+   } arg;
+
+   memcpy(arg.bytes, raw_args, sizeof(arg.bytes));
+
+   if (structors->fini_array && on_exit(__libc_fini, structors->fini_array)) {
+      fprintf(stderr, "__cxa_atexit failed\n");
+      abort();
+   }
+
+   exit(slingshot(arg.s.argc, arg.s.argv, arg.s.argv + arg.s.argc + 1));
+}
+
 #ifdef VERBOSE_FUNCTIONS
 #  include "libc-verbose.h"
 #endif
