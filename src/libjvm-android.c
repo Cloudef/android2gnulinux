@@ -30,6 +30,12 @@ android_os_Build_ID(JNIEnv *env, jobject object)
 }
 
 jstring
+android_os_Build_BRAND(JNIEnv *env, jobject object)
+{
+   return android_os_Build_MANUFACTURER(env, object);
+}
+
+jstring
 android_os_Build_VERSION_RELEASE(JNIEnv *env, jobject object)
 {
    assert(env && object);
