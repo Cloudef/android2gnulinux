@@ -22,11 +22,12 @@ Other than x86 is currently untested and probably doesn't work.
 ## Running
 
 ```shell
-./app my-x86-android-lib.so
+./andre my-android-binary
+./andre my-android-jni-lib.so
+sh andre-apk.sh my-android-unity-app.apk
 ```
 
-But currently `app` assumes pretty much `libunity.so`, so it will probably
-crash after returning from `JNI_OnLoad` :D.
+`andre-apk.sh` currently assumes app that uses `libunity.so`.
 
 ## Notes about runtime libraries and porting
 
@@ -86,8 +87,8 @@ out. Also helpful resource for this project.
 
 [libhybris](https://github.com/libhybris/libhybris) Very badly documented
 project, but I guess it has some overlap with this project? Seems to be
-mainly aimed for using android GPU drivers on GNU/Linux and nothing else
-really.
+mainly aimed for using android GPU drivers on GNU/Linux. Also uses AOSP
+linker, probably this is the resource apkenv used.
 
 ## Contributing
 
