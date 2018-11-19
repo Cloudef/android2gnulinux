@@ -165,13 +165,13 @@ raw_start(void *entry, int argc, const char *argv[])
    // XXX: make this part of the linker when it's rewritten
 #if ANDROID_X86_LINKER
    __asm__("mov 2*4(%ebp),%eax"); /* entry */
-   __asm__("mov 3*4(%ebp),%ecx"); /* original_argc */
-   __asm__("mov 4*4(%ebp),%edx"); /* original_argv */
-   __asm__("mov %edx,%esp"); /* Trim stack. */
-   __asm__("push %edx"); /* New argv */
-   __asm__("push %ecx"); /* New argc */
+   __asm__("mov 3*4(%ebp),%ecx"); /* argc */
+   __asm__("mov 4*4(%ebp),%edx"); /* argv */
+   __asm__("mov %edx,%esp"); /* trim stack. */
+   __asm__("push %edx"); /* push argv */
+   __asm__("push %ecx"); /* push argc */
    __asm__("sub %edx,%edx"); /* no rtld_fini function */
-   __asm__("jmp *%eax"); /* Goto entry. */
+   __asm__("jmp *%eax"); /* goto entry */
 #else
    warnx("raw_start not implemented for this asm platform, can't execute binaries.");
 #endif
