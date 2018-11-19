@@ -11,7 +11,7 @@ override CFLAGS ?= -g
 override CFLAGS += -std=c11 $(WARNINGS)
 override CPPFLAGS += -Isrc -DANDROID_X86_LINKER -DVERBOSE_FUNCTIONS
 
-bins = app
+bins = andre
 all: $(bins)
 
 %.a:
@@ -66,15 +66,15 @@ libdl.so: runtime/libdl.so
 libpthread.so: runtime/libpthread.so
 	ln -s $< $@
 
-app: private override CPPFLAGS += -D_GNU_SOURCE
-app: private override LDFLAGS += -L. -Wl,-Y,runtime,-rpath,runtime
-app: private override LDLIBS += -ldl -lpthread
-app: private override LDLIBS += -ljvm -ljvm-java -ljvm-android -ljvm-unity
-app: src/app.c libdl.so libpthread.so
-app: runtime/libpthread.so runtime/libc.so
-app: runtime/libandroid.so runtime/liblog.so
-app: runtime/libEGL.so runtime/libOpenSLES.so
-app: runtime/libjvm.so runtime/libjvm-java.so runtime/libjvm-android.so runtime/libjvm-unity.so
+andre: private override CPPFLAGS += -D_GNU_SOURCE
+andre: private override LDFLAGS += -L. -Wl,-Y,runtime,-rpath,runtime
+andre: private override LDLIBS += -ldl -lpthread
+andre: private override LDLIBS += -ljvm -ljvm-java -ljvm-android -ljvm-unity
+andre: src/loader.c libdl.so libpthread.so
+andre: runtime/libpthread.so runtime/libc.so
+andre: runtime/libandroid.so runtime/liblog.so
+andre: runtime/libEGL.so runtime/libOpenSLES.so
+andre: runtime/libjvm.so runtime/libjvm-java.so runtime/libjvm-android.so runtime/libjvm-unity.so
 
 install-bin: $(bins)
 	install -Dm755 $^ -t "$(DESTDIR)$(PREFIX)$(BINDIR)"
