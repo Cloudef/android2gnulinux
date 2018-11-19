@@ -56,13 +56,6 @@ __system_property_get(const char *name, char *value)
    return 0;
 }
 
-void
-__assert2(const char* file, int line, const char* function, const char* failed_expression)
-{
-   fprintf(stderr, "%s:%d: %s: assertion \"%s\" failed\n", file, line, function, failed_expression);
-   abort();
-}
-
 pid_t
 gettid(void)
 {
@@ -98,15 +91,13 @@ size_t __real_IO_file_xsputn(FILE *f, const void *buf, size_t n) { return 0; }
 
 const unsigned int bionic___page_size = PAGE_SIZE;
 
-__attribute_const__
-int*
+__attribute_const__ int*
 bionic___errno(void)
 {
    return __errno_location();
 }
 
-__attribute_const__
-int*
+__attribute_const__ int*
 bionic___get_h_errno(void)
 {
    return &h_errno;
@@ -267,10 +258,17 @@ bionic___isfinite(float f)
    return isfinite(f);
 }
 
+void
+bionic___assert2(const char* file, int line, const char* function, const char* failed_expression)
+{
+   fprintf(stderr, "%s:%d: %s: assertion \"%s\" failed\n", file, line, function, failed_expression);
+   abort();
+}
+
 uintptr_t bionic___stack_chk_guard = 4;
 
-__attribute__((noreturn))
-void bionic___stack_chk_fail(void)
+__attribute__((noreturn)) void
+bionic___stack_chk_fail(void)
 {
    abort();
 }
