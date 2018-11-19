@@ -1,7 +1,7 @@
 #!/bin/sh
 
 argv0="$0"
-msg() { printf -- '%s: %s\n' "$(basename "$argv0")" "$@" 1>&2; }
+msg() { printf -- '%s: %s\n' "${argv0##*/}" "$@" 1>&2; }
 err() { msg "$@"; exit 1; }
 
 [ -z "$1" ] && err 'usage: <apk>'
@@ -20,7 +20,7 @@ case "$arch" in
       ;;
 esac
 
-pkgname="$(aapt2 dump --file AndroidManifest.xml "$1" | grep -o '^ \+A: package="[a-zA-Z0-9._]\+"' | awk -F'"' '{print $2}')"
+pkgname="$(aapt2 dump --file AndroidManifest.xml "$1" | sed -nr 's/.*A: package="([^ "]+).*/\1/p')"
 [ -z "$pkgname" ] && err "not a valid apk (missing package name)"
 
 tmpdir="$(mktemp -d)"
