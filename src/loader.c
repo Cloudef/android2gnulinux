@@ -197,8 +197,6 @@ main(int argc, const char *argv[])
    if (!(handle = bionic_dlopen(argv[1], RTLD_LOCAL | RTLD_NOW)))
       errx(EXIT_FAILURE, "dlopen failed: %s", bionic_dlerror());
 
-   printf("trying JNI_OnLoad from: %s\n", argv[1]);
-
    struct {
       union {
          void *ptr;
