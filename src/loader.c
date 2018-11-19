@@ -227,15 +227,15 @@ main(int argc, const char *argv[])
    }
 
    int ret = EXIT_FAILURE;
-   if ((entry.JNI_OnLoad.ptr = bionic_dlsym(handle, "JNI_OnLoad"))) {
+   if (entry.start.ptr) {
+      printf("jumping to %p\n", entry.start.ptr);
+      raw_start(entry.start.ptr, argc - 1, &argv[1]);
+   } else if ((entry.JNI_OnLoad.ptr = bionic_dlsym(handle, "JNI_OnLoad"))) {
       struct jvm jvm;
       jvm_init(&jvm);
       entry.JNI_OnLoad.fun(&jvm.vm, NULL);
       ret = run_jni_game(&jvm);
       jvm_release(&jvm);
-   } else if (entry.start.ptr) {
-      printf("jumping to %p\n", entry.start.ptr);
-      raw_start(entry.start.ptr, argc - 1, &argv[1]);
    } else {
       warnx("no entrypoint found in %s", argv[1]);
    }
