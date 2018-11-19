@@ -186,7 +186,8 @@ jfloat
 android_view_MotionEvent_getY(JNIEnv *env, jobject object, va_list args)
 {
    assert(env && object);
-   return 700;
+   static int y;
+   return y = (y + 8) % 768;
 }
 
 jint
