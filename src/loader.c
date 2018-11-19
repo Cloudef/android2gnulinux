@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include <dirent.h>
 #include <libgen.h>
 #include <dlfcn.h>
@@ -132,6 +133,9 @@ run_jni_game(struct jvm *jvm)
       const char *obb_dir = getenv("ANDROID_EXTERNAL_OBB_DIR");
       if (obb_dir && (dir = opendir(obb_dir))) {
          for (struct dirent *d; (d = readdir(dir));) {
+            if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
+               continue;
+
             char path[4096];
             snprintf(path, sizeof(path), "%s/%s", obb_dir, d->d_name);
             unity.native_file.fun(&jvm->env, context, jvm->env->NewStringUTF(&jvm->env, path));
