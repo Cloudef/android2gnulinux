@@ -210,7 +210,7 @@ main(int argc, const char *argv[])
       union {
          void *ptr;
       } start;
-   } entry;
+   } entry = {0};
 
    {
       union {
