@@ -28,10 +28,25 @@ bionic_file_to_glibc_file(FILE *f)
    return f;
 }
 
+// libstdc++ uses these directly for standard streams, thus we need to wrap em
+// and IO_file wraps aren't enough.
+
 int
 bionic_fflush(FILE *f)
 {
    return fflush(bionic_file_to_glibc_file(f));
+}
+
+size_t
+bionic_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
+{
+   return fwrite(ptr, size, nmemb, bionic_file_to_glibc_file(stream));
+}
+
+int
+bionic_putc(int ch, FILE *f)
+{
+   return putc(ch, bionic_file_to_glibc_file(f));
 }
 
 // Wrapping internal glibc VTABLE functions to handle bionic's pre-M crap
