@@ -168,7 +168,7 @@ java_lang_String_getBytes(JNIEnv *env, jobject object, va_list args)
 {
    assert(env && object);
    const char *utf = (*env)->GetStringUTFChars(env, object, NULL);
-   const size_t len = strlen(utf);
+   const size_t len = (utf ? strlen(utf) : 0);
    jbyteArray bytes = (*env)->NewByteArray(env, len);
    (*env)->SetByteArrayRegion(env, bytes, 0, len, (jbyte*)utf);
    return bytes;
