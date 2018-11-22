@@ -14,8 +14,10 @@ jstring
 java_lang_System_getProperty(JNIEnv *env, jobject object, va_list args)
 {
    assert(env && object);
-   char value[92]; // PROP_VALUE_MAX 92
    const char *key = (*env)->GetStringUTFChars(env, va_arg(args, jstring), NULL);
+
+   if (!strcmp(key, "java.vm.version"))
+       return (*env)->NewStringUTF(env, "1.6");
 
    union {
       void *ptr;
@@ -25,6 +27,7 @@ java_lang_System_getProperty(JNIEnv *env, jobject object, va_list args)
    if (!(__system_property_get.ptr = dlsym(RTLD_DEFAULT, "__system_property_get")))
       return NULL;
 
+   char value[92]; // PROP_VALUE_MAX 92
    __system_property_get.fun(key, value);
    return (*env)->NewStringUTF(env, value);
 }
