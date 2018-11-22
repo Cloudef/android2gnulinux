@@ -126,7 +126,7 @@ run_jni_game(struct jvm *jvm)
    const jobject context = jvm->native.AllocObject(&jvm->env, jvm->native.FindClass(&jvm->env, "android/app/Activity"));
    unity.native_init_jni.fun(&jvm->env, context, context);
 
-   unity.native_file.fun(&jvm->env, context, jvm->env->NewStringUTF(&jvm->env, getenv("ANDROID_PACKAGE_FILE")));
+   unity.native_file.fun(&jvm->env, context, jvm->env->NewStringUTF(&jvm->env, getenv("ANDROID_PACKAGE_CODE_PATH")));
 
    {
       DIR *dir;

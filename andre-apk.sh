@@ -27,8 +27,7 @@ tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
 unzip "$1" -d "$tmpdir"
 
-export ANDROID_PACKAGE_FILE="$pkgfile"
-export ANDROID_PACKAGE_CODE_PATH="$tmpdir"
+export ANDROID_PACKAGE_CODE_PATH="$pkgfile"
 export ANDROID_PACKAGE_NAME="$pkgname"
 
 # TODO: when we have first release, make this follow XDG spec
