@@ -114,7 +114,7 @@ wrapper_create(const char *const symbol, void *function)
    } tracefun = { .fun = trace };
 
    const size_t len = strlen(symbol) + 1;
-   const char *copy = malloc(len);
+   char *copy = malloc(len);
    assert(copy && "welp, malloc failed");
    memcpy(copy, symbol, len);
    const size_t sz = &wrapper_end - &wrapper_start;
@@ -125,11 +125,11 @@ wrapper_create(const char *const symbol, void *function)
    memcpy(fun + (&wrapper_symbol - &wrapper_start) + 1, &copy, sizeof(copy));
    {
       const unsigned char *from = fun + (&wrapper_restore - &wrapper_start);
-      const unsigned char *to = (unsigned char*)tracefun.ptr - from;
+      const intptr_t to = (unsigned char*)tracefun.ptr - from;
       memcpy(fun + (&wrapper_trace - &wrapper_start) + 1, &to, sizeof(to));
    }{
       const unsigned char *from = fun + (&wrapper_ud - &wrapper_start);
-      const unsigned char *to = (unsigned char*)function - from;
+      const intptr_t to = (unsigned char*)function - from;
       memcpy(fun + (&wrapper_jmp - &wrapper_start) + 1, &to, sizeof(to));
    }
 #else
