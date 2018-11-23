@@ -107,8 +107,6 @@ wrapper_create(const char *const symbol, void *function)
       return NULL;
    }
 
-   return function;
-
 #ifdef WRAPPER_TRACE
    static const union {
       void *ptr;
