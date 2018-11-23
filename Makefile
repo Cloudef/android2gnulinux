@@ -31,7 +31,7 @@ wrapper.a: private override CFLAGS += -fvisibility=hidden
 wrapper.a: src/wrapper/verbose.h src/wrapper/wrapper.c src/wrapper/wrapper.h
 
 runtime/libpthread.so: private override CPPFLAGS += -D_GNU_SOURCE
-runtime/libpthread.so: private override LDLIBS += -lpthread
+runtime/libpthread.so: private override LDLIBS += -lpthread -lrt
 runtime/libpthread.so: src/libpthread.c
 runtime/libdl.so: private override CPPFLAGS += -D_GNU_SOURCE -DLINKER_DEBUG=1
 runtime/libdl.so: private override CFLAGS += -Wno-pedantic -Wno-variadic-macros -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast
