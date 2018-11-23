@@ -39,7 +39,7 @@ runtime/libc.so: private override LDFLAGS += -Wl,-wrap,_IO_file_xsputn
 runtime/libc.so: private override CFLAGS += -Wno-deprecated-declarations
 runtime/libc.so: private override LDLIBS += `pkg-config --libs libbsd libunwind`
 runtime/libc.so: wrapper.a src/libc.c src/libc-stdio.c src/libc-sha1.c src/libc-antiantidebug.c
-runtime/libc.so: src/libc-ctype.h src/libc-verbose.h
+runtime/libc.so: src/libc-ctype.h src/libc-sysconf.h src/libc-verbose.h
 runtime/libpthread.so: private override CPPFLAGS += -D_GNU_SOURCE
 runtime/libpthread.so: private override LDLIBS += -lpthread
 runtime/libpthread.so: src/libpthread.c
