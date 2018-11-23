@@ -30,6 +30,9 @@ wrapper.a: private override CPPFLAGS += -D_GNU_SOURCE
 wrapper.a: private override CFLAGS += -fvisibility=hidden
 wrapper.a: src/wrapper/verbose.h src/wrapper/wrapper.c src/wrapper/wrapper.h
 
+runtime/libpthread.so: private override CPPFLAGS += -D_GNU_SOURCE
+runtime/libpthread.so: private override LDLIBS += -lpthread
+runtime/libpthread.so: src/libpthread.c
 runtime/libdl.so: private override CPPFLAGS += -D_GNU_SOURCE -DLINKER_DEBUG=1
 runtime/libdl.so: private override CFLAGS += -Wno-pedantic -Wno-variadic-macros -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast
 runtime/libdl.so: private override LDLIBS += -ldl -lpthread
@@ -40,9 +43,6 @@ runtime/libc.so: private override CFLAGS += -Wno-deprecated-declarations
 runtime/libc.so: private override LDLIBS += `pkg-config --libs libbsd libunwind`
 runtime/libc.so: wrapper.a src/libc.c src/libc-stdio.c src/libc-sha1.c src/libc-antiantidebug.c
 runtime/libc.so: src/libc-ctype.h src/libc-sysconf.h src/libc-verbose.h
-runtime/libpthread.so: private override CPPFLAGS += -D_GNU_SOURCE
-runtime/libpthread.so: private override LDLIBS += -lpthread
-runtime/libpthread.so: src/libpthread.c
 runtime/libandroid.so: private override LDLIBS += `pkg-config --libs glfw3`
 runtime/libandroid.so: src/libandroid.c
 runtime/liblog.so: src/liblog.c
