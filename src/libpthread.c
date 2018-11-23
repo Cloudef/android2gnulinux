@@ -121,7 +121,7 @@ void
 bionic___pthread_cleanup_push(struct bionic_pthread_cleanup_t *c, void (*routine)(void*), void *arg)
 {
    assert(c && routine);
-   c->glibc = mmap(NULL, sizeof(*c->glibc), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+   c->glibc = mmap(NULL, sizeof(*c->glibc), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
    c->routine = routine;
    c->arg = arg;
 
@@ -163,7 +163,7 @@ default_sem_init(bionic_sem_t *sem)
 {
    // Apparently some android apps (hearthstone) do not call sem_init()
    assert(sem);
-   sem->glibc = mmap(NULL, sizeof(*sem->glibc), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+   sem->glibc = mmap(NULL, sizeof(*sem->glibc), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
    memset(sem->glibc, 0, sizeof(*sem->glibc));
 }
 
@@ -174,7 +174,7 @@ bionic_sem_init(bionic_sem_t *sem, int pshared, unsigned int value)
    // From SEM_INIT(3)
    // Initializing a semaphore that has already been initialized results in underined behavior.
    *sem = (bionic_sem_t){0};
-   sem->glibc = mmap(NULL, sizeof(*sem->glibc), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+   sem->glibc = mmap(NULL, sizeof(*sem->glibc), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
    return sem_init(sem->glibc, pshared, value);
 }
 
@@ -229,7 +229,7 @@ bionic_pthread_attr_init(bionic_attr_t *attr)
    // From PTHREAD_ATTR_INIT(3)
    // Calling `pthread_attr_init` on a thread attributes object that has already been initialized results in ud.
    *attr = (bionic_attr_t){0};
-   attr->glibc = mmap(NULL, sizeof(*attr->glibc), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+   attr->glibc = mmap(NULL, sizeof(*attr->glibc), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
    return pthread_attr_init(attr->glibc);
 }
 
@@ -238,7 +238,7 @@ bionic_pthread_getattr_np(bionic_pthread_t thread, bionic_attr_t *attr)
 {
    assert(thread && attr);
    *attr = (bionic_attr_t){0};
-   attr->glibc = mmap(NULL, sizeof(*attr->glibc), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+   attr->glibc = mmap(NULL, sizeof(*attr->glibc), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
    return pthread_getattr_np((pthread_t)thread, attr->glibc);
 }
 
@@ -345,7 +345,7 @@ bionic_pthread_mutexattr_init(bionic_mutexattr_t *attr)
    // From PTHREAD_MUTEXATTR_INIT(3)
    // The results of initializing an already initialized mutex attributes object are undefined.
    *attr = (bionic_mutexattr_t){0};
-   attr->glibc = mmap(NULL, sizeof(*attr->glibc), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+   attr->glibc = mmap(NULL, sizeof(*attr->glibc), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
    return pthread_mutexattr_init(attr->glibc);
 }
 
@@ -353,7 +353,7 @@ static void
 default_pthread_mutex_init(bionic_mutex_t *mutex)
 {
    assert(mutex);
-   mutex->glibc = mmap(NULL, sizeof(*mutex->glibc), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+   mutex->glibc = mmap(NULL, sizeof(*mutex->glibc), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
 
    for (size_t i = 0; i < ARRAY_SIZE(bionic_mutex_init_map); ++i) {
       if (!memcmp(&bionic_mutex_init_map[i].bionic, mutex, sizeof(*mutex)))
@@ -385,7 +385,7 @@ bionic_pthread_mutex_init(bionic_mutex_t *mutex, const bionic_mutexattr_t *attr)
    // From PTHREAD_MUTEX_INIT(3)
    // Attempting to initialize an already initialized mutex result in undefined behavior.
    *mutex = (bionic_mutex_t){0};
-   mutex->glibc = mmap(NULL, sizeof(*mutex->glibc), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+   mutex->glibc = mmap(NULL, sizeof(*mutex->glibc), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
    return pthread_mutex_init(mutex->glibc, (attr ? attr->glibc : NULL));
 }
 
@@ -417,7 +417,7 @@ static void
 default_pthread_cond_init(bionic_cond_t *cond)
 {
    assert(cond);
-   cond->glibc = mmap(NULL, sizeof(*cond->glibc), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+   cond->glibc = mmap(NULL, sizeof(*cond->glibc), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
    memset(cond->glibc, 0, sizeof(*cond->glibc));
 }
 
@@ -440,7 +440,7 @@ bionic_pthread_cond_init(bionic_cond_t *cond, const bionic_condattr_t *attr)
    // From PTHREAD_COND_INIT(3)
    // Attempting to initialize an already initialized mutex result in undefined behavior.
    *cond = (bionic_cond_t){0};
-   cond->glibc = mmap(NULL, sizeof(*cond->glibc), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+   cond->glibc = mmap(NULL, sizeof(*cond->glibc), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
    return pthread_cond_init(cond->glibc, (attr ? attr->glibc : NULL));
 }
 
