@@ -85,6 +85,15 @@ java_lang_ClassLoader_findLibrary(JNIEnv *env, jobject object, va_list args)
 }
 
 jobject
+java_lang_ClassLoader_findClass(JNIEnv *env, jobject object, va_list args)
+{
+   assert(env && object);
+   jstring str = va_arg(args, jstring);
+   const char *utf = (*env)->GetStringUTFChars(env, str, NULL);
+   return (*env)->FindClass(env, utf);
+}
+
+jobject
 java_lang_Class_getClassLoader(JNIEnv *env, jobject object)
 {
    assert(env && object);
