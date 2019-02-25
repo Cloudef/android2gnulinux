@@ -14,7 +14,8 @@ forgiving for incorrect implementation :D.
 ## Building
 
 ```shell
-make CFLAGS="-m32 -g" LDFLAGS="-m32"
+# to compile for android ABI x86 <https://developer.android.com/ndk/guides/abis>
+make x86
 ```
 
 Other than x86 is currently untested and probably doesn't work.
